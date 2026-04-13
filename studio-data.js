@@ -2,59 +2,155 @@ export const STUDIO_STEPS = ["בחירת מוצר", "התאמה אישית", "מ
 
 export const PRODUCT_CATEGORIES = [
   {
-    id: "cutting-board",
-    title: "קרש חיתוך",
-    description: "עץ מלא עם חריטה אישית לחוויית מטבח אלגנטית.",
-    price: 169,
-    material: "עץ",
-    image:
-      "https://images.pexels.com/photos/6164042/pexels-photo-6164042.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+    id: "necklaces",
+    title: "שרשראות",
+    useSubcategories: true,
   },
   {
-    id: "thermos",
-    title: "כוס / תרמוס",
-    description: "תרמוס פרימיום עם חריטת שם או הקדשה אישית.",
-    price: 139,
-    material: "מתכת",
-    image:
-      "https://images.pexels.com/photos/4482900/pexels-photo-4482900.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+    id: "bracelets",
+    title: "צמידים",
+    useSubcategories: true,
   },
   {
-    id: "frame",
-    title: "מסגרת",
-    description: "מסגרת מעוצבת עם חריטה שמשלימה את הרגע שלכם.",
-    price: 189,
-    material: "עץ",
-    image:
-      "https://images.pexels.com/photos/1743101/pexels-photo-1743101.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+    id: "keychains",
+    title: "מחזיקי מפתחות",
+    useSubcategories: false,
   },
   {
-    id: "keychain",
-    title: "מחזיק מפתחות",
-    description: "פריט יומיומי קטן עם נגיעה אישית מדויקת.",
-    price: 89,
-    material: "מתכת",
-    image:
-      "https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+    id: "other",
+    title: "אחר",
+    useSubcategories: false,
   },
-  {
-    id: "wood-sign",
-    title: "שלט עץ",
-    description: "שלט כניסה מעץ טבעי עם גימור חם ויוקרתי.",
-    price: 229,
-    material: "עץ",
-    image:
-      "https://images.pexels.com/photos/1055058/pexels-photo-1055058.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+];
+
+const SWATCH_MAP = {
+  gold: { color: "זהב", swatch: "#D4AF37" },
+  silver: { color: "כסוף", swatch: "#C0C0C0" },
+  black: { color: "שחור", swatch: "#2B2B2B" },
+  rose: { color: "רוז גולד", swatch: "#B76E79" },
+  white: { color: "לבן", swatch: "#F7F7F5" },
+  beige: { color: "בז׳", swatch: "#DCC8AA" },
+};
+
+const IMAGE_BANK = {
+  necklacesMen: {
+    silver: ["https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    black: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    gold: ["https://images.pexels.com/photos/5370706/pexels-photo-5370706.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
   },
-  {
-    id: "personal-gift",
-    title: "מתנה אישית",
-    description: "ערכת מתנה מעוצבת בהתאמה אישית מלאה.",
-    price: 259,
-    material: "משולב",
-    image:
-      "https://images.pexels.com/photos/264771/pexels-photo-264771.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop",
+  necklacesWomen: {
+    gold: ["https://images.pexels.com/photos/10983783/pexels-photo-10983783.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    rose: ["https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    silver: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
   },
+  braceletsMen: {
+    black: ["https://images.pexels.com/photos/9428789/pexels-photo-9428789.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    silver: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    gold: ["https://images.pexels.com/photos/10983790/pexels-photo-10983790.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+  },
+  braceletsWomen: {
+    gold: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    rose: ["https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    silver: ["https://images.pexels.com/photos/5370698/pexels-photo-5370698.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+  },
+  keychains: {
+    silver: ["https://images.pexels.com/photos/2079451/pexels-photo-2079451.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    black: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    gold: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+  },
+  other: {
+    white: ["https://images.pexels.com/photos/9826127/pexels-photo-9826127.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    black: ["https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    beige: ["https://images.pexels.com/photos/6164042/pexels-photo-6164042.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+  },
+};
+
+function makeVariants(imageSet, variantKeys, offset = 0) {
+  return variantKeys.map((key, idx) => {
+    const images = imageSet[key] || imageSet.silver || imageSet.gold || Object.values(imageSet)[0];
+    return {
+      ...SWATCH_MAP[key],
+      image: images[(offset + idx) % images.length],
+    };
+  });
+}
+
+function buildSeries({ prefix, category, subcategory, titleBase, description, startPrice, imageSet, variantKeys }, count = 8) {
+  return Array.from({ length: count }, (_, idx) => ({
+    id: `${prefix}-${idx + 1}`,
+    category,
+    subcategory,
+    title: `${titleBase} ${idx + 1}`,
+    description,
+    price: startPrice + (idx % 4) * 15,
+    variants: makeVariants(imageSet, variantKeys, idx),
+  }));
+}
+
+export const PRODUCT_ITEMS = [
+  ...buildSeries({
+    prefix: "n-men",
+    category: "necklaces",
+    subcategory: "שרשראות לגבר",
+    titleBase: "שרשרת גבר קלאסית",
+    description: "שרשרת נקייה במראה גברי יוקרתי.",
+    startPrice: 189,
+    imageSet: IMAGE_BANK.necklacesMen,
+    variantKeys: ["silver", "black", "gold"],
+  }),
+  ...buildSeries({
+    prefix: "n-women",
+    category: "necklaces",
+    subcategory: "שרשראות לאישה",
+    titleBase: "שרשרת נשית עדינה",
+    description: "שרשרת אלגנטית עם נגיעה אישית.",
+    startPrice: 199,
+    imageSet: IMAGE_BANK.necklacesWomen,
+    variantKeys: ["gold", "rose", "silver"],
+  }),
+  ...buildSeries({
+    prefix: "b-men",
+    category: "bracelets",
+    subcategory: "צמידים לגבר",
+    titleBase: "צמיד גבר מינימל",
+    description: "צמיד גברי בגימור נקי ומדויק.",
+    startPrice: 169,
+    imageSet: IMAGE_BANK.braceletsMen,
+    variantKeys: ["black", "silver", "gold"],
+  }),
+  ...buildSeries({
+    prefix: "b-women",
+    category: "bracelets",
+    subcategory: "צמידים לאישה",
+    titleBase: "צמיד נשי מעודן",
+    description: "צמיד עדין עם אפשרות חריטה אישית.",
+    startPrice: 179,
+    imageSet: IMAGE_BANK.braceletsWomen,
+    variantKeys: ["gold", "rose", "silver"],
+  }),
+  ...buildSeries({
+    prefix: "k",
+    category: "keychains",
+    subcategory: null,
+    titleBase: "מחזיק מפתחות חריטה",
+    description: "מחזיק קומפקטי בעיצוב אישי.",
+    startPrice: 89,
+    imageSet: IMAGE_BANK.keychains,
+    variantKeys: ["silver", "black", "gold"],
+  }),
+  ...buildSeries({
+    prefix: "o",
+    category: "other",
+    subcategory: null,
+    titleBase: "מתנת חריטה מיוחדת",
+    description: "מוצר מתנה ייחודי בקטגוריית אחר.",
+    startPrice: 149,
+    imageSet: IMAGE_BANK.other,
+    variantKeys: ["white", "black", "beige"],
+  }).map((item, idx) => ({
+    ...item,
+    title: idx < 4 ? `סט ספלים ${idx + 1}` : idx < 7 ? `סט סכום ${idx - 3}` : `מוצר חריטה נוסף ${idx - 6}`,
+  })),
 ];
 
 export const FONT_OPTIONS = [
@@ -62,13 +158,17 @@ export const FONT_OPTIONS = [
   { id: "serif", label: "אלגנט סריף", family: "'Times New Roman', serif" },
   { id: "mono", label: "מודרני נקי", family: "'Courier New', monospace" },
   { id: "script", label: "כתב רך", family: "'Brush Script MT', cursive" },
+  { id: "assistant", label: "Assistant נקי", family: "'Assistant', sans-serif" },
+  { id: "rubik", label: "Rubik מודרני", family: "'Rubik', sans-serif" },
+  { id: "david", label: "David קלאסי", family: "'David', serif" },
+  { id: "arial", label: "Arial נגיש", family: "Arial, sans-serif" },
 ];
 
 export const MATERIAL_OPTIONS = [
-  { id: "oak", label: "אלון טבעי", tone: "#b2845f" },
-  { id: "walnut", label: "אגוז כהה", tone: "#6e4b33" },
-  { id: "matte-steel", label: "מתכת מאט", tone: "#808890" },
-  { id: "champagne", label: "שמפניה", tone: "#be9f73" },
+  { id: "gold", label: "זהב", tone: "linear-gradient(150deg, #f2e6b8 0%, #d4af37 42%, #9a7224 100%)" },
+  { id: "silver", label: "כסף", tone: "linear-gradient(150deg, #f7f7f7 0%, #c8c8c8 48%, #8e8e8e 100%)" },
+  { id: "black-matte", label: "שחור מאט", tone: "linear-gradient(155deg, #3a3a3a 0%, #1a1a1a 55%, #0f0f0f 100%)" },
+  { id: "rose-gold", label: "רוז גולד", tone: "linear-gradient(150deg, #fce4e6 0%, #e8b4b8 45%, #b76e79 100%)" },
 ];
 
 export const SIZE_OPTIONS = [
@@ -80,7 +180,17 @@ export const SIZE_OPTIONS = [
 export const ICON_OPTIONS = ["❤", "✦", "∞", "☼", "✿", "✶"];
 
 export const SHIPPING_METHODS = [
-  { id: "home", label: "משלוח עד הבית", fee: 29, eta: "2-5 ימי עסקים" },
-  { id: "pickup", label: "איסוף עצמי", fee: 0, eta: "זמין תוך 24 שעות" },
-  { id: "express", label: "משלוח מהיר", fee: 49, eta: "עד 2 ימי עסקים" },
+  { id: "home", label: "משלוח עד הבית", fee: 0, eta: "עד 7 ימי עסקים" },
+  { id: "express", label: "משלוח אקספרס", fee: 50, eta: "עד 2 ימי עסקים" },
+  { id: "pickup", label: "איסוף עצמי — תשלום מראש", fee: 0, eta: "תוך 24 שעות" },
+  { id: "pickup-cash", label: "איסוף עצמי — תשלום במזומן", fee: 0, eta: "תוך 24 שעות" },
+];
+
+/** אפשרויות תשלום לתפריט הארנקים (UI דמה בלבד). */
+export const PAYMENT_METHOD_OPTIONS = [
+  { id: "card", label: "כרטיס אשראי", brand: null },
+  { id: "google_pay", label: "Google Pay", brand: "google" },
+  { id: "apple_pay", label: "Apple Pay", brand: "apple" },
+  { id: "bit", label: "ביט", brand: "bit" },
+  { id: "paypal", label: "PayPal", brand: "paypal" },
 ];

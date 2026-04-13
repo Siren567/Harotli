@@ -6,14 +6,19 @@
   <title>סטודיו לעיצוב מתנה | חרוטלי</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@300;400;500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./design.css" />
 </head>
 <body>
   <main class="app-shell">
     <header class="studio-topbar">
       <div class="topbar-row">
-        <a class="back-link" href="./index.html">חזרה לאתר</a>
+        <a class="back-link" href="./index.html">
+          <span class="back-link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+          </span>
+          <span class="back-link-text">חזרה לאתר</span>
+        </a>
         <h1>Design Your Gift Studio</h1>
       </div>
       <div class="progress" id="progress"></div>
@@ -21,9 +26,9 @@
 
     <section class="step active" data-step="0">
       <h2>בחירת קטגוריית מוצר</h2>
-      <p class="step-sub">בחרו מוצר להתחלת המסע. הבחירה תעביר אתכם אוטומטית לשלב ההתאמה האישית.</p>
-      <div class="chip-row" id="filters"></div>
-      <div class="product-grid" id="productGrid"></div>
+      <p class="step-sub">בחרו קטגוריה וצפו בקטלוג מוצרים אופקי בסגנון פרימיום.</p>
+      <div class="chip-row" id="categoryChips"></div>
+      <div id="catalogSections"></div>
     </section>
 
     <section class="step" data-step="1">
@@ -32,39 +37,60 @@
           <h3>תצוגת סטודיו</h3>
           <div class="stage">
             <div class="mock-product" id="mockProduct">
-              <div class="mock-engraving" id="mockEngraving"></div>
+              <div class="mock-engrave-surface" id="mockEngraveSurface"></div>
             </div>
-          </div>
-          <div class="mini-controls">
-            <button data-action="zoom-plus">זום +</button>
-            <button data-action="zoom-minus">זום -</button>
-            <button data-action="rotate">סיבוב</button>
-          </div>
-          <div class="mini-controls">
-            <button data-angle="front" class="active">קדמי</button>
-            <button data-angle="side">צד</button>
-            <button data-angle="top">עליון</button>
           </div>
         </div>
         <aside class="panel">
-          <div class="tabs">
-            <button class="active">טקסט</button><button>עיצוב</button><button>מידות</button><button>תוספות</button>
+          <div class="panel-title-row">
+            <h4>עמוד עיצוב</h4>
           </div>
-          <label>טקסט לחריטה
-            <input id="engraveInput" maxlength="40" />
-          </label>
-          <div class="form-grid">
+          <div class="engrave-header">
+            <label class="engrave-main-label">טקסט לחריטה</label>
+            <button class="add-text-btn" type="button" id="addTextBlock" aria-label="הוספת שורת טקסט">+</button>
+          </div>
+          <div id="textBlocks"></div>
+          <div class="form-grid form-grid-studio">
             <label>פונט<select id="fontSelect"></select></label>
             <label>גודל<input id="textSize" type="range" min="16" max="50" /></label>
-            <label>מיקום<select id="positionSelect"><option value="top">עליון</option><option value="center">מרכז</option><option value="bottom">תחתון</option></select></label>
+            <label>מיקום
+              <select id="positionSelect">
+                <option value="top">עליון</option>
+                <option value="center" selected>מרכז</option>
+                <option value="bottom">תחתון</option>
+              </select>
+            </label>
             <label>יישור<select id="alignSelect"><option value="right">ימין</option><option value="center">מרכז</option><option value="left">שמאל</option></select></label>
           </div>
-          <div class="opt-row" id="icons"></div>
-          <div class="opt-row" id="materials"></div>
-          <div class="opt-row" id="sizes"></div>
-          <div class="form-grid">
+          <div class="field-group">
+            <div class="engrave-header">
+              <span class="field-title engrave-inline-title">אימוג׳ים וסימנים</span>
+              <button class="add-text-btn" type="button" id="addEmojiBlock" aria-label="הוספת סימן">+</button>
+            </div>
+            <div id="emojiBlocks"></div>
+            <div id="emojiPicker" class="emoji-picker"></div>
+            <p class="field-hint">בחרו סימן לכל שורה או פתחו את בוחר האימוג׳י; בתצוגה אפשר לגרור כל סימן בנפרד.</p>
+          </div>
+          <div class="field-group">
+            <span class="field-title">בחירת צבעים</span>
+            <div class="opt-row colors-row" id="materials"></div>
+          </div>
+          <div class="field-group">
+            <span class="field-title">מידות</span>
+            <div class="opt-row sizes-row" id="sizes"></div>
+          </div>
+          <div class="field-group field-group-qty">
             <label>כמות<input id="qtyInput" type="number" min="1" /></label>
+          </div>
+          <div class="form-grid">
             <label>אריזת מתנה<select id="giftWrap"><option value="false">ללא</option><option value="true">כן, בתוספת ₪14</option></select></label>
+            <label>תוספת מיוחדת
+              <select id="extraAddon">
+                <option value="none">ללא</option>
+                <option value="priority">תיעדוף ייצור (+₪19)</option>
+                <option value="doubleEngrave">חריטה כפולה (+₪29)</option>
+              </select>
+            </label>
           </div>
           <label>הערות מיוחדות<textarea id="notesInput" rows="2"></textarea></label>
           <div class="summary-card" id="priceSummary"></div>
@@ -85,14 +111,21 @@
           <div class="form-grid" id="checkoutFields"></div>
           <h4>שיטת משלוח</h4>
           <div class="ship-row" id="shippingMethods"></div>
-          <h4>תשלום (UI בלבד)</h4>
-          <div class="form-grid">
+          <h4>תשלום (דמה)</h4>
+          <div class="wallet-menu-wrap">
+            <button type="button" class="wallet-menu-trigger" id="walletMenuTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="wallet-trigger-inner" id="walletTriggerInner"></span>
+              <span class="wallet-chevron" aria-hidden="true">▾</span>
+            </button>
+            <div class="wallet-menu" id="walletMenu" role="listbox" hidden></div>
+          </div>
+          <p class="wallet-mock-hint" id="walletMockHint" hidden>בדמו: ההמשך יתבצע דרך הארנק שנבחר.</p>
+          <div class="form-grid" id="cardFieldsGrid">
             <label>שם בעל הכרטיס<input data-checkout="cardName" /></label>
             <label>מספר כרטיס<input data-checkout="cardNumber" placeholder="4580 0000 0000 0000" /></label>
             <label>תוקף<input data-checkout="expiry" placeholder="12/29" /></label>
             <label>CVV<input data-checkout="cvv" /></label>
           </div>
-          <div class="pay-row"><button type="button">Apple Pay</button><button type="button">Google Pay</button></div>
         </div>
         <aside class="panel" id="orderSummary"></aside>
       </div>
@@ -104,11 +137,39 @@
         <h2>התשלום התקבל בהצלחה</h2>
         <p>הזמנתך נקלטה ותעבור לייצור בקרוב.</p>
         <div class="summary-card" id="finalSummary"></div>
-        <ul class="timeline">
-          <li>התקבלה הזמנה</li><li>עוברת לבדיקה</li><li>בייצור</li><li>מוכנה למשלוח</li>
+        <ul class="timeline timeline-stepper" role="list" aria-label="סטטוס הזמנה">
+          <li class="timeline-step timeline-step--done">
+            <div class="timeline-track">
+              <span class="timeline-marker timeline-marker--check" aria-hidden="true">✓</span>
+            </div>
+            <span class="timeline-label">התקבלה הזמנה</span>
+          </li>
+          <li class="timeline-step">
+            <div class="timeline-track">
+              <span class="timeline-marker timeline-marker--dot" aria-hidden="true"></span>
+            </div>
+            <span class="timeline-label">עוברת לבדיקה</span>
+          </li>
+          <li class="timeline-step">
+            <div class="timeline-track">
+              <span class="timeline-marker timeline-marker--dot" aria-hidden="true"></span>
+            </div>
+            <span class="timeline-label">בייצור</span>
+          </li>
+          <li class="timeline-step">
+            <div class="timeline-track">
+              <span class="timeline-marker timeline-marker--dot" aria-hidden="true"></span>
+            </div>
+            <span class="timeline-label">מוכנה למשלוח</span>
+          </li>
         </ul>
         <div class="nav-actions">
-          <a class="btn secondary" href="./index.html">חזרה לאתר</a>
+          <a class="back-link back-link--footer" href="./index.html">
+            <span class="back-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+            </span>
+            <span class="back-link-text">חזרה לאתר</span>
+          </a>
           <button class="btn secondary" data-action="restart">עצב מוצר נוסף</button>
           <button class="btn primary">הורד סיכום הזמנה</button>
         </div>
