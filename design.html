@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>סטודיו לעיצוב מתנה | חרוטלי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./design.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="studio-topbar">
+      <div class="topbar-row">
+        <a class="back-link" href="./index.html">חזרה לאתר</a>
+        <h1>Design Your Gift Studio</h1>
+      </div>
+      <div class="progress" id="progress"></div>
+    </header>
+
+    <section class="step active" data-step="0">
+      <h2>בחירת קטגוריית מוצר</h2>
+      <p class="step-sub">בחרו מוצר להתחלת המסע. הבחירה תעביר אתכם אוטומטית לשלב ההתאמה האישית.</p>
+      <div class="chip-row" id="filters"></div>
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <section class="step" data-step="1">
+      <div class="custom-layout">
+        <div class="viewer">
+          <h3>תצוגת סטודיו</h3>
+          <div class="stage">
+            <div class="mock-product" id="mockProduct">
+              <div class="mock-engraving" id="mockEngraving"></div>
+            </div>
+          </div>
+          <div class="mini-controls">
+            <button data-action="zoom-plus">זום +</button>
+            <button data-action="zoom-minus">זום -</button>
+            <button data-action="rotate">סיבוב</button>
+          </div>
+          <div class="mini-controls">
+            <button data-angle="front" class="active">קדמי</button>
+            <button data-angle="side">צד</button>
+            <button data-angle="top">עליון</button>
+          </div>
+        </div>
+        <aside class="panel">
+          <div class="tabs">
+            <button class="active">טקסט</button><button>עיצוב</button><button>מידות</button><button>תוספות</button>
+          </div>
+          <label>טקסט לחריטה
+            <input id="engraveInput" maxlength="40" />
+          </label>
+          <div class="form-grid">
+            <label>פונט<select id="fontSelect"></select></label>
+            <label>גודל<input id="textSize" type="range" min="16" max="50" /></label>
+            <label>מיקום<select id="positionSelect"><option value="top">עליון</option><option value="center">מרכז</option><option value="bottom">תחתון</option></select></label>
+            <label>יישור<select id="alignSelect"><option value="right">ימין</option><option value="center">מרכז</option><option value="left">שמאל</option></select></label>
+          </div>
+          <div class="opt-row" id="icons"></div>
+          <div class="opt-row" id="materials"></div>
+          <div class="opt-row" id="sizes"></div>
+          <div class="form-grid">
+            <label>כמות<input id="qtyInput" type="number" min="1" /></label>
+            <label>אריזת מתנה<select id="giftWrap"><option value="false">ללא</option><option value="true">כן, בתוספת ₪14</option></select></label>
+          </div>
+          <label>הערות מיוחדות<textarea id="notesInput" rows="2"></textarea></label>
+          <div class="summary-card" id="priceSummary"></div>
+          <div class="summary-card">טיפ עיצוב: טקסט קצר בגודל בינוני יוצר מראה אלגנטי ומאוזן.</div>
+          <div class="status-row">
+            <span class="status ok">מוכן לחריטה</span>
+            <span class="status warn">דורש בדיקה</span>
+            <span class="status">תצוגה מקדימה פעילה</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="step" data-step="2">
+      <div class="checkout-layout">
+        <div class="panel">
+          <h3>משלוח ותשלום</h3>
+          <div class="form-grid" id="checkoutFields"></div>
+          <h4>שיטת משלוח</h4>
+          <div class="ship-row" id="shippingMethods"></div>
+          <h4>תשלום (UI בלבד)</h4>
+          <div class="form-grid">
+            <label>שם בעל הכרטיס<input data-checkout="cardName" /></label>
+            <label>מספר כרטיס<input data-checkout="cardNumber" placeholder="4580 0000 0000 0000" /></label>
+            <label>תוקף<input data-checkout="expiry" placeholder="12/29" /></label>
+            <label>CVV<input data-checkout="cvv" /></label>
+          </div>
+          <div class="pay-row"><button type="button">Apple Pay</button><button type="button">Google Pay</button></div>
+        </div>
+        <aside class="panel" id="orderSummary"></aside>
+      </div>
+    </section>
+
+    <section class="step" data-step="3">
+      <div class="success">
+        <div class="success-icon">✓</div>
+        <h2>התשלום התקבל בהצלחה</h2>
+        <p>הזמנתך נקלטה ותעבור לייצור בקרוב.</p>
+        <div class="summary-card" id="finalSummary"></div>
+        <ul class="timeline">
+          <li>התקבלה הזמנה</li><li>עוברת לבדיקה</li><li>בייצור</li><li>מוכנה למשלוח</li>
+        </ul>
+        <div class="nav-actions">
+          <a class="btn secondary" href="./index.html">חזרה לאתר</a>
+          <button class="btn secondary" data-action="restart">עצב מוצר נוסף</button>
+          <button class="btn primary">הורד סיכום הזמנה</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="nav-footer" id="flowNav">
+      <button class="btn secondary" data-action="back">חזרה</button>
+      <button class="btn primary" data-action="next">המשך לשלב הבא</button>
+    </footer>
+  </main>
+  <script type="module" src="./design.js"></script>
+</body>
+</html>
