@@ -1,0 +1,441 @@
+  <!-- NAV -->
+  <nav>
+    <a href="#top" class="nav-logo" aria-label="חרוטלי — לראש הדף">חרוט<span>לי</span></a>
+    <ul class="nav-menu">
+      <li><a href="#top">דף הבית</a></li>
+      <li><a href="#how">איך זה עובד</a></li>
+      <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+    </ul>
+    <a href="{{ studio_url }}" class="nav-cta">
+      לעיצוב המתנה
+      <i data-lucide="arrow-left"></i>
+    </a>
+  </nav>
+
+  <main class="site-main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>חריטה אישית שהופכת<br>כל מוצר למתנה<br>עם <em>משמעות</em></h1>
+      <p class="hero-sub">צמידים, תליונים ומתנות בהתאמה אישית מלאה — כי כל מילה חשובה.</p>
+      <a href="{{ studio_url }}" class="btn-primary">
+        לעיצוב המתנה שלך
+        <i data-lucide="arrow-left"></i>
+      </a>
+      <div class="hero-trust">
+        <div class="stars">
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+        </div>
+        4.9 · מעל 2,400 לקוחות מרוצים
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-visual-orbs" aria-hidden="true">
+        <div class="hero-orb hero-orb-a"></div>
+        <div class="hero-orb hero-orb-b"></div>
+        <div class="hero-orb hero-orb-c"></div>
+      </div>
+
+      <div class="hero-visual-stage">
+        <div class="hero-engrave-base" aria-hidden="true"></div>
+        <div class="hero-engrave-wrap">
+          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך">
+            <defs>
+              <linearGradient id="hero-metal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F4EDE6"/>
+                <stop offset="38%" stop-color="#E8DDD4"/>
+                <stop offset="100%" stop-color="#D4C4B4"/>
+              </linearGradient>
+              <linearGradient id="hero-metal-sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+                <stop offset="45%" stop-color="rgba(255,255,255,0)"/>
+                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </linearGradient>
+              <filter id="hero-metal-shadow" x="-8%" y="-8%" width="116%" height="116%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b"/>
+                <feOffset in="b" dy="2" result="o"/>
+                <feComponentTransfer in="o" result="s">
+                  <feFuncA type="linear" slope="0.2"/>
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode in="s"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <rect class="hero-metal-plate" x="36" y="32" width="328" height="156" rx="16" fill="url(#hero-metal-grad)"/>
+            <rect x="36" y="32" width="328" height="156" rx="16" fill="url(#hero-metal-sheen)" opacity="0.35" style="pointer-events: none;"/>
+            <rect x="36" y="32" width="328" height="156" rx="16" fill="none" stroke="rgba(139,94,60,0.12)" stroke-width="1"/>
+
+            <text class="hero-engrave-words" x="200" y="114" text-anchor="middle" direction="rtl" lang="he">לנצח שלך</text>
+
+            <!-- Hidden geometry for tip motion (same curve as visible groove) -->
+            <path id="hero-groove-trace" fill="none" stroke="none" d="M 92 134 C 138 130, 178 132, 200 131 C 222 130, 262 128, 308 134"/>
+
+            <path class="hero-engrave-groove" d="M 92 134 C 138 130, 178 132, 200 131 C 222 130, 262 128, 308 134"/>
+
+            <circle class="hero-engrave-tip" r="2.2" opacity="0">
+              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" calcMode="linear"
+                values="0;0;0.85;0.85;0;0"
+                keyTimes="0;0.04;0.09;0.3;0.35;1"/>
+              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" rotate="0"
+                keyTimes="0;0.3;0.62;0.63;1"
+                keyPoints="0;1;1;0;0">
+                <mpath href="#hero-groove-trace"/>
+              </animateMotion>
+            </circle>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section class="benefits">
+    <div class="section-header section-header-center">
+      <div class="section-label">למה לבחור בנו</div>
+      <h2 class="section-title">כל מה שצריך למתנה מושלמת</h2>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="heart"></i></div>
+        <h3>מתנה אישית עם משמעות</h3>
+        <p>כל מוצר הופך לזיכרון שנשאר לנצח — שם, תאריך, או מילה שרק אתם מבינים.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="gem"></i></div>
+        <h3>חריטה מדויקת ואיכותית</h3>
+        <p>טכנולוגיית לייזר מתקדמת שמבטיחה חריטה חדה, ברורה ועמידה לאורך שנים.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="truck"></i></div>
+        <h3>משלוח מהיר עד הבית</h3>
+        <p>הזמינו היום, תקבלו בקרוב. אריזת מתנה כלולה ללא עלות נוספת.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="section-header section-header-center">
+      <div class="section-label">תהליך פשוט</div>
+      <h2 class="section-title">איך זה עובד?</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step fade-up">
+        <div class="step-number">1</div>
+        <h3>בוחרים מוצר</h3>
+        <p>צמיד, תליון, מחזיק מפתחות — מבחר רחב לכל מי שאתם אוהבים.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-number">2</div>
+        <h3>כותבים חריטה</h3>
+        <p>שם, תאריך, משפט — אנחנו מחרטים בדיוק מה שביקשתם.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-number">3</div>
+        <h3>מקבלים עד הבית</h3>
+        <p>עטוף יפה ומוכן למתנה, ישירות לדלת שלכם.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLES -->
+  <section class="examples">
+    <div class="section-header section-header-center">
+      <div class="section-label">השראה לחריטה</div>
+      <h2 class="section-title">מה אנשים חורטים?</h2>
+    </div>
+    <div class="examples-grid">
+      <div class="example-tag fade-up">לאמא הכי טובה בעולם</div>
+      <div class="example-tag fade-up">לנצח שלך</div>
+      <div class="example-tag fade-up">12.08.2023</div>
+      <div class="example-tag fade-up">תמיד אתך</div>
+      <div class="example-tag fade-up">אהבה ראשונה ואחרונה</div>
+    </div>
+    <p class="examples-sub">
+      <span class="examples-sub-text">או כל מילה שרק אתם יודעים את המשמעות שלה</span>
+      <i data-lucide="sparkles" class="examples-sub-icon" aria-hidden="true"></i>
+    </p>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section class="products" id="products">
+    <div class="section-header section-header-center">
+      <div class="section-label">הקולקציה שלנו</div>
+      <h2 class="section-title">נבחרים במיוחד</h2>
+    </div>
+    <div class="products-grid">
+
+      <div class="product-card fade-up">
+        <div class="product-image">
+          <div class="product-image-inner">
+            <img src="https://images.pexels.com/photos/10475790/pexels-photo-10475790.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="צמיד זהב — אפשרות לחריטה אישית" width="640" height="384" loading="lazy" decoding="async" />
+          </div>
+        </div>
+        <div class="product-info">
+          <h3>צמיד זהב עם חריטה</h3>
+          <div class="price">החל מ־₪129</div>
+          <a href="#cta" class="btn-secondary">
+            <i data-lucide="shopping-bag"></i>
+            לפרטים
+          </a>
+        </div>
+      </div>
+
+      <div class="product-card fade-up">
+        <div class="product-image">
+          <div class="product-image-inner">
+            <img src="https://images.pexels.com/photos/265906/pexels-photo-265906.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="תליון ושרשרת — אפשרות לחריטה אישית" width="640" height="384" loading="lazy" decoding="async" />
+          </div>
+        </div>
+        <div class="product-info">
+          <h3>תליון עם חריטה</h3>
+          <div class="price">החל מ־₪149</div>
+          <a href="#cta" class="btn-secondary">
+            <i data-lucide="shopping-bag"></i>
+            לפרטים
+          </a>
+        </div>
+      </div>
+
+      <div class="product-card fade-up">
+        <div class="product-image">
+          <div class="product-image-inner">
+            <img src="https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="טבעות ומתנה אישית — אפשרות לחריטה" width="640" height="384" loading="lazy" decoding="async" />
+          </div>
+        </div>
+        <div class="product-info">
+          <h3>ערכת מתנה אישית</h3>
+          <div class="price">החל מ־₪199</div>
+          <a href="#cta" class="btn-secondary">
+            <i data-lucide="shopping-bag"></i>
+            לפרטים
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="cta">
+    <div class="section-label">מוכנים?</div>
+    <h2>רוצה מתנה אישית<br>שלא שוכחים?</h2>
+    <p>צרו מתנה שתישאר בלב לנצח — תהליך פשוט, תוצאה מרגשת.</p>
+    <a href="{{ studio_url }}" class="btn-light">
+      התחל לעצב עכשיו
+      <i data-lucide="arrow-left"></i>
+    </a>
+  </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">חרוט<span>לי</span></div>
+        <p>מתנות אישיות עם חריטה מקצועית — כי כל מילה שווה לנצח.</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-nav-col">
+          <h4>ניווט</h4>
+          <ul>
+            <li><a href="#top">דף הבית</a></li>
+            <li><a href="#how">איך זה עובד</a></li>
+            <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col" id="footer-contact">
+          <h4>מידע</h4>
+          <ul>
+            <li><a href="#" data-open-modal="terms">תקנון</a></li>
+            <li><a href="#" data-open-modal="privacy">מדיניות פרטיות</a></li>
+            <li><a href="#" data-open-modal="usage">תנאי שימוש</a></li>
+            <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-bottom-meta">
+        <p>© 2026 חרוטלי. כל הזכויות שמורות.</p>
+        <a href="https://zh-studio.xyz" target="_blank" rel="noopener noreferrer" class="zh-studio-credit">Made By ZH STUDIO</a>
+      </div>
+      <a href="https://wa.me/972559433968" class="footer-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="שליחת הודעה בוואטסאפ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span>שלחו לנו בוואטסאפ</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <div class="site-modal-overlay" id="modal-terms" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-terms-title">
+      <div class="site-modal-header">
+        <h2 id="modal-terms-title">תקנון</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p><strong>טקסט דמה לצורך תצוגה בלבד.</strong> מסמך זה אינו מחייב משפטית ויש להחליפו בתקנון מלא לפני עלייה לאוויר.</p>
+        <h3>1. כללי</h3>
+        <p>השימוש באתר כפוף לתנאים המפורטים להלן. רכישה באתר מהווה הסכמה לתקנון זה.</p>
+        <h3>2. מוצרים והזמנות</h3>
+        <p>תיאורי מוצרים, מחירים וזמני אספקה עשויים להשתנות. אנו שומרים לעצמנו את הזכות לבטל הזמנה במקרה של טעות סופרת או חוסר במלאי.</p>
+        <h3>3. אחריות</h3>
+        <p>האתר מסופק כמות שהוא (AS IS). אין אחריות מפורשת או משתמעת מעבר לנדרש על פי דין.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-privacy" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-privacy-title">
+      <div class="site-modal-header">
+        <h2 id="modal-privacy-title">מדיניות פרטיות</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p><strong>טקסט דמה לצורך תצוגה בלבד.</strong> יש להכין מדיניות פרטיות מלאה בהתאם לחוק ולעסק.</p>
+        <h3>איסוף מידע</h3>
+        <p>במהלך שימוש באתר עשוי להיאסף מידע שמסרת מרצון — לדוגמה שם, דוא״ל, טלפון ופרטי הזמנה — לצורך מתן שירות, מענה לפניות ושיפור החוויה.</p>
+        <h3>שימוש במידע</h3>
+        <p>המידע ישמש לצורך עיבוד הזמנות, יצירת קשר עמך ועמידה בדרישות דין. לא נמכור את פרטיך לצד שלישי לצורכי שיווק ללא הסכמתך (טקסט פיקטיבי).</p>
+        <h3>עוגיות</h3>
+        <p>האתר עשוי להשתמש בעוגיות לצורך תפקוד בסיסי וסטטיסטיקה. ניתן לנהל העדפות בדפדפן.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-usage" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-usage-title">
+      <div class="site-modal-header">
+        <h2 id="modal-usage-title">תנאי שימוש</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p><strong>טקסט דמה לצורך תצוגה בלבד.</strong> יש להתאים את התנאים לעסק וליעוץ משפטי.</p>
+        <h3>שימוש מותר</h3>
+        <p>האתר מיועד לשימוש אישי ולגילי רכישה חוקיים בלבד. אסור להשתמש באתר בניגוד לדין או לפגוע בתוכנו או במערכותיו.</p>
+        <h3>קניין רוחני</h3>
+        <p>כל התכנים באתר, לרבות טקסטים, עיצוב וסימנים מסחריים, שמורים לבעליהם החוקיים. אין להעתיק או לעשות בהם שימוש מסחרי ללא אישור.</p>
+        <h3>הגבלת אחריות</h3>
+        <p>השימוש באתר הוא על אחריות המשתמש בלבד. לא נישא באחריות לנזק עקיף או תוצאתי (פיקטיבי).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-contact" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-contact-title">
+      <div class="site-modal-header">
+        <h2 id="modal-contact-title">צור קשר</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <form id="contact-form" class="contact-form" novalidate>
+          <label>
+            שם מלא
+            <input type="text" name="name" required autocomplete="name" placeholder="לדוגמה: יעל כהן" />
+          </label>
+          <label>
+            מספר הזמנה <span class="field-hint">(אופציונלי)</span>
+            <input type="text" name="order" inputmode="numeric" autocomplete="off" placeholder="לדוגמה: HG-2026-12345" />
+          </label>
+          <label>
+            טלפון
+            <input type="tel" name="phone" required autocomplete="tel" placeholder="לדוגמה: 050-0000000" />
+          </label>
+          <label>
+            הודעה
+            <textarea name="message" required placeholder="כיצד נוכל לעזור?"></textarea>
+          </label>
+          <button type="submit" class="contact-form-submit">שלח</button>
+        </form>
+        <div id="contact-success" class="contact-success" hidden>
+          <div class="contact-success-icon" aria-hidden="true">✓</div>
+          <h3>הפנייה נשלחה</h3>
+          <p>הודעתך התקבלה אצלנו. נחזור אליך תוך <strong>שני ימי עסקים</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Init Lucide icons
+    lucide.createIcons();
+
+    (function () {
+      function closeModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.remove("is-open");
+        document.body.style.overflow = "";
+        if (overlay.id === "modal-contact") {
+          const form = document.getElementById("contact-form");
+          const ok = document.getElementById("contact-success");
+          if (form && ok) {
+            form.hidden = false;
+            ok.hidden = true;
+            form.reset();
+          }
+        }
+      }
+
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+      }
+
+      document.querySelectorAll("[data-open-modal]").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const key = a.getAttribute("data-open-modal");
+          const map = { terms: "modal-terms", privacy: "modal-privacy", usage: "modal-usage", contact: "modal-contact" };
+          const id = map[key];
+          if (id) openModal(id);
+        });
+      });
+
+      document.querySelectorAll("[data-modal-close]").forEach((btn) => {
+        btn.addEventListener("click", () => closeModal(btn.closest(".site-modal-overlay")));
+      });
+
+      document.querySelectorAll(".site-modal-overlay").forEach((ov) => {
+        ov.addEventListener("click", (e) => {
+          if (e.target === ov) closeModal(ov);
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        document.querySelectorAll(".site-modal-overlay.is-open").forEach((ov) => closeModal(ov));
+      });
+
+      const contactForm = document.getElementById("contact-form");
+      contactForm?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!contactForm.checkValidity()) {
+          contactForm.reportValidity();
+          return;
+        }
+        contactForm.hidden = true;
+        const ok = document.getElementById("contact-success");
+        if (ok) ok.hidden = false;
+      });
+    })();
+
+    // Scroll fade animation
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>

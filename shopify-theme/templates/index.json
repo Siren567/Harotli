@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "charoteli_landing": {
+      "type": "charoteli-landing",
+      "settings": {}
+    }
+  },
+  "order": ["charoteli_landing"]
+}

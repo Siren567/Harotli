@@ -1,0 +1,37 @@
+{%- liquid
+  if section.settings.studio_page != blank
+    assign studio_url = section.settings.studio_page.url
+  elsif pages.studio
+    assign studio_url = pages.studio.url
+  else
+    assign studio_url = '/pages/studio'
+  endif
+-%}
+
+{{ 'theme-home.css' | asset_url | stylesheet_tag }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.pexels.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+
+<div class="charoteli-landing" id="top">
+  {% render 'charoteli-landing-body', studio_url: studio_url %}
+</div>
+
+{% schema %}
+{
+  "name": "דף נחיתה חרוטלי",
+  "tag": "section",
+  "class": "section-charoteli-landing",
+  "settings": [
+    {
+      "type": "page",
+      "id": "studio_page",
+      "label": "דף סטודיו",
+      "info": "אם לא נבחר עמוד — ישתמש בעמוד עם ה-handle studio (אם קיים). חובה: עמוד עם תבנית «studio»."
+    }
+  ],
+  "presets": [{ "name": "דף נחיתה חרוטלי" }]
+}
+{% endschema %}
