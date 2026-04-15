@@ -11,6 +11,7 @@ export async function proxy(request: NextRequest) {
   if (
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/api/auth/") ||
+    pathname === "/admin/login" ||
     pathname === "/login" ||
     pathname.includes("favicon")
   ) {
@@ -89,7 +90,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // ── Not authenticated → redirect to login ────────────────────────────
-  const loginUrl = new URL("/login", request.url);
+  const loginUrl = new URL("/admin/login", request.url);
   if (pathname !== "/") loginUrl.searchParams.set("from", pathname);
   return NextResponse.redirect(loginUrl);
 }

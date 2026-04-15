@@ -37,7 +37,7 @@ export function Topbar() {
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/admin/login");
     router.refresh();
   }
 
