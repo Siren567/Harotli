@@ -1,6 +1,10 @@
 function apiBases() {
   const host = window.location.hostname || "localhost";
   const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+  const knownAdminApiHosts = [
+    // Vercel admin deployment fallback (can be replaced/extended as needed)
+    "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app",
+  ];
   const candidates = [
     "",
     window.location.origin || "",
@@ -12,6 +16,7 @@ function apiBases() {
     `https://${host}:3000`,
     "http://localhost:4444",
     "http://localhost:3000",
+    ...knownAdminApiHosts,
   ];
   return [...new Set(candidates.filter(Boolean))];
 }
