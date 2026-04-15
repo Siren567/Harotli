@@ -17,6 +17,52 @@ import { isSupabaseConfigured } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 
 type SB = SupabaseClient<Database>;
+type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+const STUDIO_COLORS_MIGRATION_HINT =
+  "הוסיפו את העמודה studio_colors: הריצו את הקובץ admin-panel/supabase/migrations/002_product_studio_and_categories.sql ב־Supabase → SQL Editor.";
+
+function isMissingStudioColorsColumnError(message: string | undefined): boolean {
+  return !!message && message.includes("studio_colors");
+}
+
+function isMissingCategoryAssignmentsTableError(message: string | undefined): boolean {
+  if (!message) return false;
+  return (
+    message.includes("product_category_assignments") &&
+    (message.includes("schema cache") || message.includes("relation") || message.includes("does not exist"))
+  );
+}
+
+/** Insert product; retries without studio_colors if the column does not exist on the remote DB yet. */
+async function insertProductRow(sb: SB, row: ProductInsert) {
+  let res = await sb.from("products").insert(row).select("id").single();
+  if (res.error && isMissingStudioColorsColumnError(res.error.message) && row.studio_colors !== undefined) {
+    const { studio_colors: _removed, ...rest } = row;
+    res = await sb.from("products").insert(rest).select("id").single();
+    if (!res.error) console.warn(`[productService] ${STUDIO_COLORS_MIGRATION_HINT}`);
+  }
+  return res;
+}
+
+/** Update product; retries without studio_colors if the column is missing. */
+async function updateProductRow(sb: SB, id: string, updates: ProductUpdate) {
+  let res = await sb.from("products").update(updates).eq("id", id);
+  if (res.error && isMissingStudioColorsColumnError(res.error.message) && updates.studio_colors !== undefined) {
+    const { studio_colors: _removed, ...rest } = updates;
+    if (Object.keys(rest).length === 0) {
+      return {
+        error: {
+          message: `לא ניתן לשמור צבעי סטודיו: העמודה studio_colors לא קיימת במסד. ${STUDIO_COLORS_MIGRATION_HINT}`,
+        },
+      };
+    }
+    res = await sb.from("products").update(rest).eq("id", id);
+    if (!res.error) console.warn(`[productService] ${STUDIO_COLORS_MIGRATION_HINT}`);
+  }
+  return res;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -25,7 +71,8 @@ function assembleProduct(
   p: DbProduct,
   images: DbProductImage[],
   inventory: DbInventory | null,
-  categoryName: string | null
+  categoryName: string | null,
+  categoryAssignmentIds: string[] = []
 ): ProductWithDetails {
   const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order);
   return {
@@ -34,6 +81,7 @@ function assembleProduct(
     images: sorted,
     inventory,
     category_name: categoryName,
+    category_assignment_ids: categoryAssignmentIds,
   };
 }
 
@@ -63,6 +111,7 @@ function mockToDetails(m: (typeof mockProducts)[0]): ProductWithDetails {
     status: m.status,
     is_featured: m.featured,
     tags: m.tags,
+    studio_colors: ["gold", "silver", "rose", "black"],
     seo_title: m.seoTitle ?? null,
     seo_description: m.seoDescription ?? null,
     created_at: m.createdAt,
@@ -77,6 +126,7 @@ function mockToDetails(m: (typeof mockProducts)[0]): ProductWithDetails {
       updated_at: m.updatedAt,
     },
     category_name: cat?.name ?? null,
+    category_assignment_ids: m.subcategoryId ? [m.subcategoryId] : m.categoryId ? [m.categoryId] : [],
   };
 }
 
@@ -167,7 +217,7 @@ export async function getProducts(
     inventory: DbInventory | null;
     categories: { name: string } | null;
   }) =>
-    assembleProduct(row, row.product_images ?? [], row.inventory, row.categories?.name ?? null)
+    assembleProduct(row, row.product_images ?? [], row.inventory, row.categories?.name ?? null, [])
   );
 
   return { products, total: count ?? 0 };
@@ -190,11 +240,28 @@ export async function getProductById(
 
   if (error || !data) return null;
 
+  const row = data as DbProduct & {
+    product_images: DbProductImage[];
+    inventory: DbInventory | null;
+    categories: { name: string } | null;
+  };
+
+  const { data: links, error: linksError } = await sb
+    .from("product_category_assignments")
+    .select("category_id")
+    .eq("product_id", id);
+  if (linksError && !isMissingCategoryAssignmentsTableError(linksError.message)) {
+    throw new Error(`getProductById(assignments): ${linksError.message}`);
+  }
+
+  const assignmentIds = (links ?? []).map((l) => l.category_id);
+
   return assembleProduct(
-    data,
-    (data as DbProduct & { product_images: DbProductImage[] }).product_images ?? [],
-    (data as DbProduct & { inventory: DbInventory | null }).inventory,
-    (data as DbProduct & { categories: { name: string } | null }).categories?.name ?? null
+    row,
+    row.product_images ?? [],
+    row.inventory,
+    row.categories?.name ?? null,
+    assignmentIds
   );
 }
 
@@ -211,27 +278,31 @@ export async function createProduct(
 
   const slug = form.slug || slugify(form.name);
 
+  const { primaryCategoryId, primarySubcategoryId } = await derivePrimaryCategoriesFromAssignments(
+    sb,
+    form.category_assignment_ids
+  );
+
   // 1. Insert product
-  const { data: product, error } = await sb
-    .from("products")
-    .insert({
-      name: form.name,
-      slug,
-      short_description: form.short_description || null,
-      description: form.description || null,
-      sku: form.sku,
-      price: Number(form.price),
-      compare_price: form.compare_price ? Number(form.compare_price) : null,
-      category_id: form.category_id || null,
-      subcategory_id: form.subcategory_id || null,
-      status: form.status,
-      is_featured: form.is_featured,
-      tags: form.tags,
-      seo_title: form.seo_title || null,
-      seo_description: form.seo_description || null,
-    })
-    .select("id")
-    .single();
+  const insertRow: ProductInsert = {
+    name: form.name,
+    slug,
+    short_description: form.short_description || null,
+    description: form.description || null,
+    sku: form.sku,
+    price: Number(form.price),
+    compare_price: form.compare_price ? Number(form.compare_price) : null,
+    category_id: primaryCategoryId,
+    subcategory_id: primarySubcategoryId,
+    status: form.status,
+    is_featured: form.is_featured,
+    tags: form.tags,
+    studio_colors: normalizeStudioColors(form.studio_colors as string[] | undefined),
+    seo_title: form.seo_title || null,
+    seo_description: form.seo_description || null,
+  };
+
+  const { data: product, error } = await insertProductRow(sb, insertRow);
 
   if (error || !product) throw new Error(`createProduct: ${error?.message}`);
 
@@ -246,6 +317,8 @@ export async function createProduct(
     quantity: Number(form.inventory_quantity) || 0,
     low_stock_threshold: Number(form.low_stock_threshold) || 5,
   });
+
+  await replaceCategoryAssignments(sb, product.id, form.category_assignment_ids);
 
   return { id: product.id };
 }
@@ -272,11 +345,27 @@ export async function updateProduct(
   if (form.status !== undefined)            updates.status = form.status;
   if (form.is_featured !== undefined)       updates.is_featured = form.is_featured;
   if (form.tags !== undefined)              updates.tags = form.tags;
+  if (form.studio_colors !== undefined) {
+    updates.studio_colors = normalizeStudioColors(form.studio_colors as string[] | undefined);
+  }
   if (form.seo_title !== undefined)         updates.seo_title = form.seo_title || null;
   if (form.seo_description !== undefined)   updates.seo_description = form.seo_description || null;
 
-  const { error } = await sb.from("products").update(updates).eq("id", id);
+  if (form.category_assignment_ids !== undefined) {
+    const { primaryCategoryId, primarySubcategoryId } = await derivePrimaryCategoriesFromAssignments(
+      sb,
+      form.category_assignment_ids
+    );
+    updates.category_id = primaryCategoryId;
+    updates.subcategory_id = primarySubcategoryId;
+  }
+
+  const { error } = await updateProductRow(sb, id, updates);
   if (error) throw new Error(`updateProduct: ${error.message}`);
+
+  if (form.category_assignment_ids !== undefined) {
+    await replaceCategoryAssignments(sb, id, form.category_assignment_ids);
+  }
 
   // Replace images if provided
   if (form.images !== undefined) {
@@ -374,28 +463,29 @@ export async function duplicateProduct(sb: SB, id: string): Promise<{ id: string
   const newSku  = `${src.sku}-copy-${Date.now().toString(36)}`;
   const newSlug = `${src.slug}-copy`;
 
-  const { data: dup, error: dupErr } = await sb
-    .from("products")
-    .insert({
-      name: `${src.name} (עותק)`,
-      slug: newSlug,
-      short_description: src.short_description,
-      description: src.description,
-      sku: newSku,
-      price: src.price,
-      compare_price: src.compare_price,
-      category_id: src.category_id,
-      subcategory_id: src.subcategory_id,
-      status: "draft" as const,
-      is_featured: src.is_featured,
-      tags: src.tags,
-      seo_title: src.seo_title,
-      seo_description: src.seo_description,
-    })
-    .select("id")
-    .single();
+  const dupInsert: ProductInsert = {
+    name: `${src.name} (עותק)`,
+    slug: newSlug,
+    short_description: src.short_description,
+    description: src.description,
+    sku: newSku,
+    price: src.price,
+    compare_price: src.compare_price,
+    category_id: src.category_id,
+    subcategory_id: src.subcategory_id,
+    status: "draft",
+    is_featured: src.is_featured,
+    tags: src.tags,
+    studio_colors: normalizeStudioColors(
+      (src as DbProduct & { studio_colors?: string[] }).studio_colors ?? undefined
+    ),
+    seo_title: src.seo_title,
+    seo_description: src.seo_description,
+  };
 
-  if (dupErr || !dup) throw new Error(`duplicateProduct: insert failed`);
+  const { data: dup, error: dupErr } = await insertProductRow(sb, dupInsert);
+
+  if (dupErr || !dup) throw new Error(`duplicateProduct: ${dupErr?.message ?? "insert failed"}`);
 
   // Copy images
   const srcImages = src.product_images ?? [];
@@ -411,10 +501,71 @@ export async function duplicateProduct(sb: SB, id: string): Promise<{ id: string
     });
   }
 
+  const { data: linkRows, error: linksError } = await sb
+    .from("product_category_assignments")
+    .select("category_id")
+    .eq("product_id", id);
+  if (linksError && !isMissingCategoryAssignmentsTableError(linksError.message)) {
+    throw new Error(`duplicateProduct(assignments): ${linksError.message}`);
+  }
+  const linkIds = (linkRows ?? []).map((r) => r.category_id);
+  if (linkIds.length) await replaceCategoryAssignments(sb, dup.id, linkIds);
+
   return { id: dup.id };
 }
 
 // ─── Private helpers ─────────────────────────────────────────────────────────
+
+const STUDIO_COLOR_KEYS = new Set(["gold", "silver", "rose", "black"]);
+
+function normalizeStudioColors(keys: string[] | undefined): string[] {
+  const filtered = (keys ?? []).filter((k) => STUDIO_COLOR_KEYS.has(k));
+  return filtered.length ? filtered : ["gold", "silver", "rose", "black"];
+}
+
+async function derivePrimaryCategoriesFromAssignments(
+  sb: SB,
+  assignmentIds: string[]
+): Promise<{ primaryCategoryId: string | null; primarySubcategoryId: string | null }> {
+  const uniq = [...new Set(assignmentIds)].filter(Boolean);
+  if (!uniq.length) return { primaryCategoryId: null, primarySubcategoryId: null };
+
+  const { data: cats, error } = await sb.from("categories").select("id,parent_id").in("id", uniq);
+  if (error) throw new Error(`derivePrimaryCategoriesFromAssignments: ${error.message}`);
+
+  const byId = new Map((cats ?? []).map((c) => [c.id, c]));
+  const firstId = uniq[0];
+  const cat = byId.get(firstId);
+  if (!cat) return { primaryCategoryId: null, primarySubcategoryId: null };
+
+  if (cat.parent_id) {
+    return { primaryCategoryId: cat.parent_id, primarySubcategoryId: cat.id };
+  }
+  return { primaryCategoryId: cat.id, primarySubcategoryId: null };
+}
+
+async function replaceCategoryAssignments(sb: SB, productId: string, ids: string[]) {
+  const { error: deleteError } = await sb
+    .from("product_category_assignments")
+    .delete()
+    .eq("product_id", productId);
+  if (deleteError && isMissingCategoryAssignmentsTableError(deleteError.message)) {
+    console.warn("[productService] product_category_assignments table is missing; skipping assignment sync.");
+    return;
+  }
+  if (deleteError) throw new Error(`replaceCategoryAssignments(delete): ${deleteError.message}`);
+
+  const rows = [...new Set(ids)]
+    .filter(Boolean)
+    .map((category_id) => ({ product_id: productId, category_id }));
+  if (!rows.length) return;
+  const { error } = await sb.from("product_category_assignments").insert(rows);
+  if (error && isMissingCategoryAssignmentsTableError(error.message)) {
+    console.warn("[productService] product_category_assignments table is missing; skipping assignment sync.");
+    return;
+  }
+  if (error) throw new Error(`replaceCategoryAssignments: ${error.message}`);
+}
 
 async function insertImages(sb: SB, productId: string, urls: string[]) {
   const rows = urls.filter(Boolean).map((url, i) => ({

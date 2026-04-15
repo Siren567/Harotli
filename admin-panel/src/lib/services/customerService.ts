@@ -3,14 +3,48 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
+import type { Database, DbOrder } from "@/types/database";
 import type { CustomerWithStats } from "@/types";
 import { mockCustomers } from "@/lib/mock-data";
 import { isSupabaseConfigured } from "@/lib/auth";
+import { readStudioDemoDbOrders } from "@/lib/studio-demo-storage";
 
 type SB = SupabaseClient<Database>;
 
 // ─── Mock adapter ─────────────────────────────────────────────────────────────
+
+/** לקוחות שמופיעים רק מהזמנות סטודיו (דמו) ב-localStorage */
+function studioDemoCustomersAsStats(): CustomerWithStats[] {
+  const orders = readStudioDemoDbOrders();
+  const byId = new Map<string, DbOrder[]>();
+  for (const o of orders) {
+    const cid = o.customer_id;
+    if (!cid) continue;
+    const arr = byId.get(cid) ?? [];
+    arr.push(o);
+    byId.set(cid, arr);
+  }
+  const rows: CustomerWithStats[] = [];
+  for (const [id, list] of byId) {
+    const sample = list[0]!;
+    const sorted = [...list].sort((a, b) => b.created_at.localeCompare(a.created_at));
+    const oldest = [...list].sort((a, b) => a.created_at.localeCompare(b.created_at))[0]!;
+    rows.push({
+      id,
+      name: sample.customer_name,
+      email: sample.customer_email ?? "",
+      phone: sample.customer_phone ?? "",
+      city: sample.shipping_city ?? "",
+      notes: null,
+      created_at: oldest.created_at,
+      updated_at: sorted[0]!.updated_at,
+      orders_count: list.length,
+      total_spent: list.reduce((s, x) => s + Number(x.total), 0),
+      last_order_at: sorted[0]!.created_at,
+    });
+  }
+  return rows.sort((a, b) => (b.last_order_at ?? "").localeCompare(a.last_order_at ?? ""));
+}
 
 function mockToCustomerWithStats(): CustomerWithStats[] {
   return mockCustomers.map((c) => ({
@@ -31,7 +65,12 @@ function mockToCustomerWithStats(): CustomerWithStats[] {
 // ─── READ ────────────────────────────────────────────────────────────────────
 
 export async function getCustomers(sb: SB): Promise<CustomerWithStats[]> {
-  if (!isSupabaseConfigured()) return mockToCustomerWithStats();
+  if (!isSupabaseConfigured()) {
+    const base = mockToCustomerWithStats();
+    const extra = studioDemoCustomersAsStats();
+    const seen = new Set(base.map((c) => c.id));
+    return [...extra.filter((c) => !seen.has(c.id)), ...base];
+  }
 
   // Fetch customers and their orders separately — avoids FK join ambiguity in generated types
   const { data: customerRows, error: custErr } = await sb
@@ -57,7 +96,7 @@ export async function getCustomers(sb: SB): Promise<CustomerWithStats[]> {
     ordersByCustomer.set(o.customer_id, existing);
   }
 
-  return (customerRows ?? []).map((row) => {
+  const base = (customerRows ?? []).map((row) => {
     const orders = ordersByCustomer.get(row.id) ?? [];
     const orders_count = orders.length;
     const total_spent = orders.reduce((sum: number, o: OrderRow) => sum + Number(o.total), 0);
@@ -80,4 +119,9 @@ export async function getCustomers(sb: SB): Promise<CustomerWithStats[]> {
       last_order_at,
     };
   });
+
+  if (typeof window === "undefined") return base;
+  const extra = studioDemoCustomersAsStats();
+  const seen = new Set(base.map((c) => c.id));
+  return [...extra.filter((c) => !seen.has(c.id)), ...base];
 }

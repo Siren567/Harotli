@@ -307,7 +307,10 @@ export default function OrdersPage() {
                     >
                       {/* Order # */}
                       <td style={tdStyle}>
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--primary)" }}>{order.order_number}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--primary)" }}>{order.order_number}</span>
+                          <span style={{ fontSize: "11px", color: "var(--muted-foreground)", direction: "ltr" }}>ID: {order.id}</span>
+                        </div>
                       </td>
 
                       {/* Customer */}

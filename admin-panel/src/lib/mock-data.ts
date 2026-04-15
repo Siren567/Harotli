@@ -134,8 +134,8 @@ export const mockOrders: Order[] = [
 
 // ─── Coupons ──────────────────────────────────────────────────────
 export const mockCoupons: Coupon[] = [
-  { id: "coup1", code: "WELCOME10", type: "percentage", value: 10, minOrderValue: 100, maxUses: 100, usedCount: 34, active: true, expiresAt: "2024-06-30T23:59:59Z", createdAt: "2024-01-01T10:00:00Z" },
-  { id: "coup2", code: "SAVE30", type: "fixed", value: 30, minOrderValue: 200, maxUses: 50, usedCount: 12, active: true, expiresAt: "2024-05-31T23:59:59Z", createdAt: "2024-02-01T10:00:00Z" },
+  { id: "coup1", code: "WELCOME10", type: "percentage", value: 10, minOrderValue: 100, maxUses: 100, usedCount: 34, active: true, expiresAt: "2027-12-31T23:59:59Z", createdAt: "2024-01-01T10:00:00Z" },
+  { id: "coup2", code: "SAVE30", type: "fixed", value: 30, minOrderValue: 200, maxUses: 50, usedCount: 12, active: true, expiresAt: "2027-12-31T23:59:59Z", createdAt: "2024-02-01T10:00:00Z" },
   { id: "coup3", code: "SPRING20", type: "percentage", value: 20, minOrderValue: 150, maxUses: undefined, usedCount: 8, active: false, expiresAt: "2024-04-01T23:59:59Z", createdAt: "2024-03-01T10:00:00Z" },
   { id: "coup4", code: "VIP15", type: "percentage", value: 15, minOrderValue: undefined, maxUses: 20, usedCount: 7, active: true, expiresAt: undefined, createdAt: "2024-01-15T10:00:00Z" },
 ];
@@ -163,7 +163,7 @@ export const mockSettings: StoreSettings = {
   seoDescription: "עיצוב תכשיטים אישיים עם חריטה - שרשראות, צמידים, עגילים ומחזיקי מפתחות",
   instagram: "harotli",
   facebook: "harotli",
-  whatsapp: "972501234567",
+  whatsapp: "972559433968",
 };
 
 // ─── Dashboard Stats ──────────────────────────────────────────────

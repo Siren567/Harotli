@@ -1,5 +1,10 @@
 {
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:all": "bash ./scripts/start-all.sh"
+  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.103.0"
+    "@supabase/supabase-js": "^2.103.0",
+    "http-proxy": "^1.18.1"
   }
 }

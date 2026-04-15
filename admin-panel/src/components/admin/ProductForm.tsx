@@ -4,16 +4,16 @@ import { useState, useEffect, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight, Save, X, Plus, AlertCircle,
-  Eye, EyeOff, FileText,
+  Eye, EyeOff, FileText, Upload, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { createProduct, updateProduct } from "@/lib/services/productService";
-import type { ProductWithDetails, ProductFormData, ProductStatus, DbCategory } from "@/types";
-import { mockCategories } from "@/lib/mock-data";
-import { isSupabaseConfigured } from "@/lib/auth";
+import { getCategories } from "@/lib/services/categoryService";
+import type { ProductWithDetails, ProductFormData, ProductStatus, DbCategory, StudioProductColorKey } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { slugify } from "@/lib/utils";
+import { uploadProductImage } from "@/lib/uploadProductImage";
 
 interface Props {
   /** Pass an existing product to enable edit mode */
@@ -27,11 +27,21 @@ const STATUSES: { value: ProductStatus; label: string; desc: string }[] = [
   { value: "out_of_stock", label: "אזל המלאי",   desc: "מוצג כאזל" },
 ];
 
+const STUDIO_COLOR_OPTIONS: { key: StudioProductColorKey; label: string }[] = [
+  { key: "gold", label: "זהב" },
+  { key: "silver", label: "כסף" },
+  { key: "rose", label: "רוז גולד" },
+  { key: "black", label: "שחור" },
+];
+const CUSTOMER_UPLOAD_TAG = "allow_customer_image_upload";
+
 const EMPTY_FORM: ProductFormData = {
   name: "", slug: "", short_description: "", description: "",
   sku: "", price: "", compare_price: "",
   category_id: "", subcategory_id: "",
-  status: "draft", is_featured: false,
+  category_assignment_ids: [],
+  studio_colors: ["gold", "silver", "rose", "black"],
+  status: "active", is_featured: false,
   tags: [], seo_title: "", seo_description: "",
   images: ["", "", "", "", ""],
   inventory_quantity: "0", low_stock_threshold: "5",
@@ -49,28 +59,15 @@ export default function ProductForm({ product }: Props) {
   const [tagInput, setTagInput] = useState("");
   const [slugManual, setSlugManual] = useState(false);
   const [categories, setCategories] = useState<DbCategory[]>([]);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
-  // Load categories from Supabase (or fall back to mock)
+  // Load categories (auto-seeded from site defaults when empty)
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
-      // Convert camelCase mock to DbCategory shape
-      setCategories(mockCategories.map(c => ({
-        id: c.id, name: c.name, slug: c.slug,
-        description: c.description ?? null,
-        image_url: c.image ?? null,
-        parent_id: c.parentId ?? null,
-        sort_order: c.order,
-        created_at: c.createdAt,
-        updated_at: c.createdAt,
-      })));
-      return;
-    }
-    sb.from("categories")
-      .select("*")
-      .order("sort_order")
-      .then(({ data, error }) => {
-        if (error) console.error("categories load:", error.message);
-        else setCategories(data ?? []);
+    getCategories(sb)
+      .then((data) => setCategories(data))
+      .catch((err) => {
+        console.error("categories load:", err);
+        toast("שגיאה בטעינת קטגוריות", "error");
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -80,6 +77,15 @@ export default function ProductForm({ product }: Props) {
     if (!product) return;
     const imageUrls = product.images.map(i => i.url);
     while (imageUrls.length < 5) imageUrls.push("");
+    const assignments =
+      product.category_assignment_ids?.length
+        ? product.category_assignment_ids
+        : product.subcategory_id
+          ? [product.subcategory_id]
+          : product.category_id
+            ? [product.category_id]
+            : [];
+    const colors = (product.studio_colors as StudioProductColorKey[] | undefined)?.filter(Boolean);
     setForm({
       name: product.name,
       slug: product.slug,
@@ -90,6 +96,8 @@ export default function ProductForm({ product }: Props) {
       compare_price: product.compare_price ?? "",
       category_id: product.category_id ?? "",
       subcategory_id: product.subcategory_id ?? "",
+      category_assignment_ids: assignments,
+      studio_colors: colors?.length ? colors : ["gold", "silver", "rose", "black"],
       status: product.status,
       is_featured: product.is_featured,
       tags: product.tags,
@@ -117,6 +125,10 @@ export default function ProductForm({ product }: Props) {
   // ── Tags ────────────────────────────────────────────────────────────────
   function addTag() {
     const tag = tagInput.trim();
+    if (tag === CUSTOMER_UPLOAD_TAG) {
+      setTagInput("");
+      return;
+    }
     if (!tag || form.tags.includes(tag)) { setTagInput(""); return; }
     set("tags", [...form.tags, tag]);
     setTagInput("");
@@ -126,12 +138,56 @@ export default function ProductForm({ product }: Props) {
     if (e.key === "Enter") { e.preventDefault(); addTag(); }
   }
 
+  function toggleCategoryAssignment(id: string) {
+    const next = new Set(form.category_assignment_ids);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setForm((f) => ({ ...f, category_assignment_ids: [...next] }));
+    if (errors.category_assignment_ids) setErrors((er) => ({ ...er, category_assignment_ids: undefined }));
+  }
+
+  async function onPickImageFile(idx: number, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingIdx(idx);
+    try {
+      const url = await uploadProductImage(sb, file);
+      const imgs = [...form.images];
+      imgs[idx] = url;
+      set("images", imgs);
+      toast("התמונה הועלתה", "success");
+    } catch (err) {
+      console.error(err);
+      toast(err instanceof Error ? err.message : "העלאה נכשלה", "error");
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  function toggleStudioColor(key: StudioProductColorKey) {
+    const next = new Set(form.studio_colors);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setForm((f) => ({ ...f, studio_colors: [...next] as StudioProductColorKey[] }));
+    if (errors.studio_colors) setErrors((er) => ({ ...er, studio_colors: undefined }));
+  }
+
+  function toggleCustomerUpload(enabled: boolean) {
+    const next = new Set(form.tags);
+    if (enabled) next.add(CUSTOMER_UPLOAD_TAG);
+    else next.delete(CUSTOMER_UPLOAD_TAG);
+    set("tags", [...next]);
+  }
+
   // ── Validation ──────────────────────────────────────────────────────────
   function validate(): boolean {
     const e: typeof errors = {};
     if (!form.name.trim())           e.name  = "שם המוצר הוא שדה חובה";
     if (!form.sku.trim())            e.sku   = "SKU הוא שדה חובה";
     if (!form.price || Number(form.price) <= 0) e.price = "מחיר חייב להיות גדול מ-0";
+    if (!form.category_assignment_ids.length) e.category_assignment_ids = "יש לבחור לפחות קטגוריה אחת";
+    if (!form.studio_colors.length)  e.studio_colors = "יש לבחור לפחות צבע תצוגה";
     if (!form.images[0]?.trim())     e.images = "יש להוסיף לפחות תמונה ראשית";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -161,11 +217,27 @@ export default function ProductForm({ product }: Props) {
   }
 
   // ── Derived ─────────────────────────────────────────────────────────────
-  const parentCats = categories.filter(c => !c.parent_id);
-  const subCats    = categories.filter(c => c.parent_id === form.category_id);
+  const preferredRootOrder = ["necklaces", "bracelets", "keychains", "other"];
+  const rootCandidates = categories.filter((c) => !c.parent_id);
+  const parentCats = preferredRootOrder
+    .map((slug) => rootCandidates.find((c) => c.slug === slug))
+    .filter(Boolean) as DbCategory[];
+  const fallbackRootCats = rootCandidates.filter((c) => !parentCats.some((p) => p.id === c.id));
+  const dedupedFallback = fallbackRootCats.filter(
+    (c, i, arr) => arr.findIndex((x) => x.name.trim() === c.name.trim()) === i
+  );
+  const visibleParentCats = [...parentCats, ...dedupedFallback];
+  const hasChildren = (id: string) => categories.some((c) => c.parent_id === id);
+  const leafCategories = categories.filter((c) => !hasChildren(c.id));
+  const groupedLeaves = visibleParentCats.map((parent) => ({
+    parent,
+    leaves: leafCategories.filter((l) => l.parent_id === parent.id),
+  })).filter((g) => g.leaves.length > 0);
+  const rootLeaves = leafCategories.filter((l) => !l.parent_id);
   const salePercent = form.compare_price && form.price
     ? Math.round((1 - Number(form.price) / Number(form.compare_price)) * 100)
     : 0;
+  const visibleTags = form.tags.filter((t) => t !== CUSTOMER_UPLOAD_TAG);
 
   // ── Styles ───────────────────────────────────────────────────────────────
   const card: React.CSSProperties = {
@@ -282,7 +354,7 @@ export default function ProductForm({ product }: Props) {
           <div style={card}>
             <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>תמונות</h2>
             <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginBottom: "18px" }}>
-              התמונה הראשונה תוצג כתמונה ראשית. הדבק כתובות URL של תמונות.
+              התמונה הראשונה תוצג כתמונה ראשית. אפשר להדביק קישור או להעלות קובץ מהמחשב (עד 5MB).
             </p>
 
             {form.images.map((url, idx) => (
@@ -302,7 +374,7 @@ export default function ProductForm({ product }: Props) {
                     : <FileText size={20} color="var(--muted-foreground)" />}
                 </div>
 
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <input
                     value={url}
                     onChange={e => {
@@ -313,6 +385,38 @@ export default function ProductForm({ product }: Props) {
                     placeholder={idx === 0 ? "כתובת URL של התמונה הראשית *" : `תמונה ${idx + 1} (אופציונלי)`}
                     style={inp(idx === 0 && !!errors.images)}
                   />
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", flexWrap: "wrap" }}>
+                    <label
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--border)",
+                        background: uploadingIdx === idx ? "var(--muted)" : "var(--card)",
+                        cursor: uploadingIdx === idx ? "wait" : "pointer",
+                        opacity: uploadingIdx === idx ? 0.85 : 1,
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                        hidden
+                        disabled={uploadingIdx === idx}
+                        onChange={(e) => onPickImageFile(idx, e)}
+                      />
+                      {uploadingIdx === idx ? (
+                        <Loader2 size={14} className="animate-spin" style={{ flexShrink: 0 }} />
+                      ) : (
+                        <Upload size={14} style={{ flexShrink: 0 }} />
+                      )}
+                      {uploadingIdx === idx ? "מעלה…" : "העלאה מהמחשב"}
+                    </label>
+                    <span style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>או הדבקת קישור למעלה</span>
+                  </div>
                   {idx === 0 && errors.images && <div style={errMsg}><AlertCircle size={11} />{errors.images}</div>}
                   {idx === 0 && <p style={{ fontSize: "10px", color: "var(--primary)", marginTop: "3px" }}>תמונה ראשית</p>}
                 </div>
@@ -491,36 +595,109 @@ export default function ProductForm({ product }: Props) {
               />
               <span style={{ fontSize: "13px" }}>מוצר מומלץ (featured)</span>
             </label>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={form.tags.includes(CUSTOMER_UPLOAD_TAG)}
+                onChange={(e) => toggleCustomerUpload(e.target.checked)}
+                style={{ accentColor: "var(--primary)" }}
+              />
+              <span style={{ fontSize: "13px" }}>לאפשר ללקוח העלאת תמונה בהזמנה</span>
+            </label>
           </div>
 
-          {/* Category */}
+          {/* Categories (multi) + studio display colors */}
           <div style={card}>
-            <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "14px" }}>קטגוריה</h2>
-            <div style={{ marginBottom: "12px" }}>
-              <label style={label}>קטגוריה ראשית</label>
-              <select
-                value={form.category_id}
-                onChange={e => { set("category_id", e.target.value); set("subcategory_id", ""); }}
-                style={{ width: "100%", background: "var(--input)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 12px", fontSize: "13px", color: "var(--foreground)", outline: "none", cursor: "pointer" }}
-              >
-                <option value="">ללא קטגוריה</option>
-                {parentCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+            <h2 style={{ fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>קטגוריות בחנות</h2>
+            <p style={{ fontSize: "11px", color: "var(--muted-foreground)", marginBottom: "14px", lineHeight: 1.45 }}>
+              סמנו את כל הקטגוריות שבהן המוצר יופיע בסטודיו (אפשר יותר מאחת).
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", maxHeight: "280px", overflowY: "auto", paddingInlineEnd: "4px" }}>
+              {groupedLeaves.map(({ parent, leaves }) => (
+                <div key={parent.id}>
+                  <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px", color: "var(--foreground)" }}>{parent.name}</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {leaves.map((leaf) => (
+                      <label
+                        key={leaf.id}
+                        style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.category_assignment_ids.includes(leaf.id)}
+                          onChange={() => toggleCategoryAssignment(leaf.id)}
+                          style={{ accentColor: "var(--primary)" }}
+                        />
+                        {leaf.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {rootLeaves.length > 0 && (
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: 700, marginBottom: "8px" }}>כללי</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {rootLeaves.map((leaf) => (
+                      <label key={leaf.id} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "13px" }}>
+                        <input
+                          type="checkbox"
+                          checked={form.category_assignment_ids.includes(leaf.id)}
+                          onChange={() => toggleCategoryAssignment(leaf.id)}
+                          style={{ accentColor: "var(--primary)" }}
+                        />
+                        {leaf.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-
-            {subCats.length > 0 && (
-              <div>
-                <label style={label}>תת-קטגוריה</label>
-                <select
-                  value={form.subcategory_id}
-                  onChange={e => set("subcategory_id", e.target.value)}
-                  style={{ width: "100%", background: "var(--input)", border: "1px solid var(--border)", borderRadius: "8px", padding: "9px 12px", fontSize: "13px", color: "var(--foreground)", outline: "none", cursor: "pointer" }}
-                >
-                  <option value="">ללא תת-קטגוריה</option>
-                  {subCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+            {errors.category_assignment_ids && (
+              <div style={{ ...errMsg, marginTop: "10px" }}>
+                <AlertCircle size={12} />
+                {errors.category_assignment_ids}
               </div>
             )}
+
+            <div style={{ marginTop: "18px", paddingTop: "14px", borderTop: "1px solid var(--border)" }}>
+              <label style={label}>צבעי תצוגה בסטודיו</label>
+              <p style={{ fontSize: "11px", color: "var(--muted-foreground)", marginBottom: "10px" }}>
+                אילו גוונים יופיעו לבחירת הלקוח בכרטיס המוצר.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                {STUDIO_COLOR_OPTIONS.map((opt) => (
+                  <label
+                    key={opt.key}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      padding: "6px 10px",
+                      borderRadius: "8px",
+                      border: `1px solid ${form.studio_colors.includes(opt.key) ? "rgba(201,169,110,0.45)" : "var(--border)"}`,
+                      background: form.studio_colors.includes(opt.key) ? "rgba(201,169,110,0.08)" : "var(--input)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.studio_colors.includes(opt.key)}
+                      onChange={() => toggleStudioColor(opt.key)}
+                      style={{ accentColor: "var(--primary)" }}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+              {errors.studio_colors && (
+                <div style={{ ...errMsg, marginTop: "8px" }}>
+                  <AlertCircle size={12} />
+                  {errors.studio_colors}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Tags */}
@@ -542,9 +719,9 @@ export default function ProductForm({ product }: Props) {
                 <Plus size={14} />
               </button>
             </div>
-            {form.tags.length > 0 && (
+            {visibleTags.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
-                {form.tags.map(t => (
+                {visibleTags.map(t => (
                   <span
                     key={t}
                     style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "rgba(201,169,110,0.12)", border: "1px solid rgba(201,169,110,0.25)", borderRadius: "6px", padding: "3px 8px", fontSize: "12px", color: "var(--primary)" }}

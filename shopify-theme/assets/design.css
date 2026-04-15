@@ -2,8 +2,54 @@
 body { margin: 0; font-family: "Heebo", sans-serif; background: #f4ece4; color: #2c1b10; }
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .studio-topbar { position: sticky; top: 0; z-index: 5; background: rgba(255, 251, 245, 0.92); backdrop-filter: blur(12px); border-bottom: 1px solid #e9d9ca; padding: 14px 22px; }
-.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.topbar-row h1 { margin: 0; font-size: 1rem; }
+.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topbar-next,
+.topbar-prev {
+  flex: 1;
+  min-width: 0;
+  max-width: min(280px, 52vw);
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-prev {
+  font-weight: 600;
+}
+.nav-footer-site {
+  flex-shrink: 0;
+}
+.studio-whatsapp-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #2dd36f 0%, #1fa855 42%, #0f9d7a 100%);
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  box-shadow: 0 6px 22px rgba(15, 157, 122, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  flex: 0 1 auto;
+  min-width: 0;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+.studio-whatsapp-nav svg {
+  flex-shrink: 0;
+  opacity: 0.98;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
+}
+.studio-whatsapp-nav:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  color: #fff !important;
+}
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -712,7 +758,7 @@ input, select, textarea { border: 1px solid #e9d9ca; border-radius: 10px; paddin
   color: #2c1b10;
 }
 
-.nav-footer { margin-top: auto; border-top: 1px solid #e9d9ca; background: rgba(255,251,245,.92); display: flex; justify-content: space-between; gap: 10px; padding: 14px 22px; position: sticky; bottom: 0; }
+.nav-footer { margin-top: auto; border-top: 1px solid #e9d9ca; background: rgba(255,251,245,.92); display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 22px; position: sticky; bottom: 0; }
 .btn { border: 0; border-radius: 12px; padding: 11px 16px; font-family: inherit; font-size: .9rem; cursor: pointer; text-decoration: none; }
 .btn.primary { background: linear-gradient(120deg, #3b2a1a, #6e4b33); color: #fff; }
 .btn.secondary { background: #fff; border: 1px solid #e9d9ca; color: #2c1b10; }

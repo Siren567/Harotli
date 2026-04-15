@@ -2,9 +2,9 @@
 
 cd "$(dirname "$0")"
 
-echo "Starting server..."
+echo "Starting site + admin..."
 
-python3 -m http.server 3005
+bash "./scripts/start-all.sh"
 
-echo "Server stopped"
+echo "Servers stopped"
 read

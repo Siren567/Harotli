@@ -200,7 +200,7 @@ function CategoryRow({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function CategoriesPage() {
-  const sb   = createClient();
+  const sb = useMemo(() => createClient(), []);
   const toast = useToast();
 
   const [categories, setCategories]     = useState<DbCategory[]>([]);
@@ -222,22 +222,37 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sb, toast]);
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = useMemo(() => {
+  /** חיפוש: כולל תתי-קטגוריות תואמות + כל האבות בהיררכיה כדי שהעץ לא ייעלם */
+  const { visibleCategories, displayRoots } = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return categories;
-    return categories.filter((c) =>
-      c.name.toLowerCase().includes(q) ||
-      c.slug.toLowerCase().includes(q) ||
-      (c.description ?? "").toLowerCase().includes(q)
-    );
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    let visible = categories;
+    if (q) {
+      const ids = new Set<string>();
+      for (const c of categories) {
+        const match =
+          c.name.toLowerCase().includes(q) ||
+          c.slug.toLowerCase().includes(q) ||
+          (c.description ?? "").toLowerCase().includes(q);
+        if (!match) continue;
+        let cur: DbCategory | undefined = c;
+        while (cur) {
+          ids.add(cur.id);
+          cur = cur.parent_id ? byId.get(cur.parent_id) : undefined;
+        }
+      }
+      visible = categories.filter((c) => ids.has(c.id));
+    }
+    const roots = visible
+      .filter((c) => !c.parent_id)
+      .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "he"));
+    return { visibleCategories: visible, displayRoots: roots };
   }, [categories, search]);
 
-  const roots    = filtered.filter((c) => !c.parent_id).sort((a, b) => a.sort_order - b.sort_order);
   const totalSub = categories.filter((c) => !!c.parent_id).length;
 
   async function handleSave(form: CategoryFormData, id?: string) {
@@ -295,7 +310,9 @@ export default function CategoriesPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)" }}>קטגוריות</h1>
-            <p style={{ fontSize: "13px", color: "var(--muted-foreground)", marginTop: "3px" }}>{categories.length} קטגוריות · {totalSub} תתי-קטגוריות</p>
+            <p style={{ fontSize: "13px", color: "var(--muted-foreground)", marginTop: "3px" }}>
+              {loading ? "טוען…" : `${categories.length} קטגוריות · ${totalSub} תתי-קטגוריות`}
+            </p>
           </div>
           <button onClick={() => setEditTarget("new")} style={{ display: "flex", alignItems: "center", gap: "7px", background: "var(--primary)", border: "none", borderRadius: "9px", padding: "10px 18px", fontSize: "13px", fontWeight: 700, color: "#09090b", cursor: "pointer" }}>
             <Plus size={15} /> קטגוריה חדשה
@@ -312,7 +329,7 @@ export default function CategoriesPage() {
             <div key={label} style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "12px", padding: "16px 18px", display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: bg, border: `1px solid ${border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
               <div>
-                <p style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", lineHeight: 1 }}>{count}</p>
+                <p style={{ fontSize: "22px", fontWeight: 700, color: "var(--foreground)", lineHeight: 1 }}>{loading ? "—" : count}</p>
                 <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginTop: "3px" }}>{label}</p>
               </div>
             </div>
@@ -329,7 +346,11 @@ export default function CategoriesPage() {
 
         {/* Tree */}
         <div style={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
-          {roots.length === 0 ? (
+          {loading ? (
+            <div style={{ padding: "56px 24px", textAlign: "center", color: "var(--muted-foreground)", fontSize: "14px" }}>
+              טוען קטגוריות…
+            </div>
+          ) : categories.length === 0 ? (
             <div style={{ padding: "60px 24px", textAlign: "center" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
                 <div style={{ width: "54px", height: "54px", background: "var(--input)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -339,13 +360,17 @@ export default function CategoriesPage() {
                 <button onClick={() => setEditTarget("new")} style={{ background: "var(--primary)", border: "none", borderRadius: "8px", padding: "9px 18px", fontSize: "13px", fontWeight: 700, color: "#09090b", cursor: "pointer" }}>+ צור קטגוריה ראשונה</button>
               </div>
             </div>
+          ) : displayRoots.length === 0 ? (
+            <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--muted-foreground)", fontSize: "14px" }}>
+              לא נמצאו קטגוריות התואמות לחיפוש
+            </div>
           ) : (
-            roots.map((cat) => (
+            displayRoots.map((cat) => (
               <CategoryRow
                 key={cat.id}
                 category={cat}
-                children={filtered.filter((c) => c.parent_id === cat.id).sort((a, b) => a.sort_order - b.sort_order)}
-                allCategories={filtered}
+                children={visibleCategories.filter((c) => c.parent_id === cat.id).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "he"))}
+                allCategories={visibleCategories}
                 onEdit={(c) => setEditTarget(c)}
                 onDelete={handleDelete}
               />

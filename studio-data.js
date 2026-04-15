@@ -32,36 +32,100 @@ const SWATCH_MAP = {
   beige: { color: "בז׳", swatch: "#DCC8AA" },
 };
 
+export const STUDIO_VARIANT_BY_KEY = {
+  gold: { color: "זהב", swatch: "#D4AF37" },
+  silver: { color: "כסף", swatch: "#C0C0C0" },
+  black: { color: "שחור", swatch: "#2B2B2B" },
+  rose: { color: "רוז גולד", swatch: "#B76E79" },
+};
+
 const IMAGE_BANK = {
   necklacesMen: {
-    silver: ["https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    black: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    gold: ["https://images.pexels.com/photos/5370706/pexels-photo-5370706.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    silver: [
+      "https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    black: [
+      "https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/9428789/pexels-photo-9428789.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    gold: [
+      "https://images.pexels.com/photos/5370706/pexels-photo-5370706.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983783/pexels-photo-10983783.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
   necklacesWomen: {
-    gold: ["https://images.pexels.com/photos/10983783/pexels-photo-10983783.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    rose: ["https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    silver: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    gold: [
+      "https://images.pexels.com/photos/10983783/pexels-photo-10983783.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/5370706/pexels-photo-5370706.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    rose: [
+      "https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983783/pexels-photo-10983783.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    silver: [
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/5370698/pexels-photo-5370698.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
   braceletsMen: {
-    black: ["https://images.pexels.com/photos/9428789/pexels-photo-9428789.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    silver: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    gold: ["https://images.pexels.com/photos/10983790/pexels-photo-10983790.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    black: [
+      "https://images.pexels.com/photos/9428789/pexels-photo-9428789.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    silver: [
+      "https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983790/pexels-photo-10983790.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    gold: [
+      "https://images.pexels.com/photos/10983790/pexels-photo-10983790.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/9428789/pexels-photo-9428789.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
   braceletsWomen: {
-    gold: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    rose: ["https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    silver: ["https://images.pexels.com/photos/5370698/pexels-photo-5370698.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    gold: [
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/5370698/pexels-photo-5370698.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    rose: [
+      "https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    silver: [
+      "https://images.pexels.com/photos/5370698/pexels-photo-5370698.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/9428777/pexels-photo-9428777.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
   keychains: {
-    silver: ["https://images.pexels.com/photos/2079451/pexels-photo-2079451.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    black: ["https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    gold: ["https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    silver: [
+      "https://images.pexels.com/photos/2079451/pexels-photo-2079451.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    black: [
+      "https://images.pexels.com/photos/10983785/pexels-photo-10983785.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/2079451/pexels-photo-2079451.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    gold: [
+      "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
   other: {
-    white: ["https://images.pexels.com/photos/9826127/pexels-photo-9826127.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    black: ["https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
-    beige: ["https://images.pexels.com/photos/6164042/pexels-photo-6164042.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop"],
+    white: [
+      "https://images.pexels.com/photos/9826127/pexels-photo-9826127.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/6164042/pexels-photo-6164042.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    black: [
+      "https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/9826127/pexels-photo-9826127.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
+    beige: [
+      "https://images.pexels.com/photos/6164042/pexels-photo-6164042.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+      "https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop",
+    ],
   },
 };
 
@@ -75,7 +139,23 @@ function makeVariants(imageSet, variantKeys, offset = 0) {
   });
 }
 
+/** כל כתובות התמונות לגלריה בתחתית הסטודיו (ללא כפילויות, לפי סדר צבעים). */
+function collectGalleryUrls(imageSet, variantKeys) {
+  const out = [];
+  const seen = new Set();
+  for (const k of variantKeys) {
+    for (const u of imageSet[k] || []) {
+      if (u && !seen.has(u)) {
+        seen.add(u);
+        out.push(u);
+      }
+    }
+  }
+  return out;
+}
+
 function buildSeries({ prefix, category, subcategory, titleBase, description, startPrice, imageSet, variantKeys }, count = 8) {
+  const imageUrls = collectGalleryUrls(imageSet, variantKeys);
   return Array.from({ length: count }, (_, idx) => ({
     id: `${prefix}-${idx + 1}`,
     category,
@@ -83,6 +163,7 @@ function buildSeries({ prefix, category, subcategory, titleBase, description, st
     title: `${titleBase} ${idx + 1}`,
     description,
     price: startPrice + (idx % 4) * 15,
+    imageUrls,
     variants: makeVariants(imageSet, variantKeys, idx),
   }));
 }
@@ -180,11 +261,10 @@ export const SIZE_OPTIONS = [
 export const ICON_OPTIONS = ["❤", "✦", "∞", "☼", "✿", "✶"];
 
 export const SHIPPING_METHODS = [
-  { id: "home", label: "משלוח עד הבית", fee: 0, eta: "עד 7 ימי עסקים" },
-  { id: "express", label: "משלוח אקספרס", fee: 50, eta: "עד 2 ימי עסקים" },
-  { id: "pickup", label: "איסוף עצמי — תשלום מראש", fee: 0, eta: "תוך 24 שעות" },
-  { id: "pickup-cash", label: "איסוף עצמי — תשלום במזומן", fee: 0, eta: "תוך 24 שעות" },
+  { id: "pickup", label: "איסוף עצמי", fee: 0, eta: "תיאום מול הסטודיו" },
+  { id: "home", label: "משלוח עד 7 ימי עסקים (חינם)", fee: 0, eta: "חינם" },
 ];
+
 
 /** אפשרויות תשלום לתפריט הארנקים (UI דמה בלבד). */
 export const PAYMENT_METHOD_OPTIONS = [

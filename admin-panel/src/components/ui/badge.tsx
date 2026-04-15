@@ -42,13 +42,13 @@ export function Badge({ children, variant = "default", size = "sm" }: BadgeProps
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   const map: Record<OrderStatus, { label: string; variant: BadgeProps["variant"] }> = {
-    new: { label: "חדשה", variant: "info" },
-    pending: { label: "ממתין", variant: "warning" },
-    processing: { label: "בעיבוד", variant: "default" },
-    shipped: { label: "נשלח", variant: "info" },
-    completed: { label: "הושלם", variant: "success" },
-    cancelled: { label: "בוטל", variant: "error" },
-    refunded: { label: "הוחזר", variant: "muted" },
+    new: { label: "התקבלה", variant: "info" },
+    pending: { label: "התקבלה", variant: "info" },
+    processing: { label: "בייצור", variant: "default" },
+    shipped: { label: "נשלחה", variant: "info" },
+    completed: { label: "נמסרה", variant: "success" },
+    cancelled: { label: "בוטלה", variant: "error" },
+    refunded: { label: "בוטלה", variant: "error" },
   };
   const { label, variant } = map[status];
   return <Badge variant={variant}>{label}</Badge>;

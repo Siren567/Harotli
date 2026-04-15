@@ -12,11 +12,10 @@
 
 export const SESSION_COOKIE = "sb-session"; // Supabase SSR sets this automatically
 
-// ─── Fallback credentials (dev only) ────────────────────────────────────────
-// Used only when Supabase is not yet connected.
+// ─── Panel credentials (hardcoded by request) ───────────────────────────────
 export const DEV_CREDENTIALS = {
-  email: process.env.ADMIN_EMAIL ?? "admin@harotli.co.il",
-  password: process.env.ADMIN_PASSWORD ?? "harotli2024",
+  username: "root",
+  password: "smhgkji2547@",
 };
 
 export function isSupabaseConfigured(): boolean {

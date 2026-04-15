@@ -63,6 +63,7 @@ export interface Database {
           status: "active" | "hidden" | "draft" | "out_of_stock";
           is_featured: boolean;
           tags: string[];
+          studio_colors: string[];
           seo_title: string | null;
           seo_description: string | null;
           created_at: string;
@@ -82,6 +83,7 @@ export interface Database {
           status?: "active" | "hidden" | "draft" | "out_of_stock";
           is_featured?: boolean;
           tags?: string[];
+          studio_colors?: string[];
           seo_title?: string | null;
           seo_description?: string | null;
           created_at?: string;
@@ -101,9 +103,26 @@ export interface Database {
           status?: "active" | "hidden" | "draft" | "out_of_stock";
           is_featured?: boolean;
           tags?: string[];
+          studio_colors?: string[];
           seo_title?: string | null;
           seo_description?: string | null;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+
+      product_category_assignments: {
+        Row: {
+          product_id: string;
+          category_id: string;
+        };
+        Insert: {
+          product_id: string;
+          category_id: string;
+        };
+        Update: {
+          product_id?: string;
+          category_id?: string;
         };
         Relationships: [];
       };
@@ -522,6 +541,74 @@ export interface Database {
         };
         Relationships: [];
       };
+
+      marketing_site_events: {
+        Row: {
+          id: string;
+          created_at: string;
+          event_type: string;
+          page_path: string | null;
+          referrer: string | null;
+          utm_source: string | null;
+          utm_medium: string | null;
+          utm_campaign: string | null;
+          utm_content: string | null;
+          utm_term: string | null;
+          fbclid: string | null;
+          gclid: string | null;
+          product_id: string | null;
+          product_name: string | null;
+          session_id: string;
+          user_agent: string | null;
+          language: string | null;
+          screen_w: number | null;
+          screen_h: number | null;
+          meta: Json | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          event_type: string;
+          page_path?: string | null;
+          referrer?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          utm_term?: string | null;
+          fbclid?: string | null;
+          gclid?: string | null;
+          product_id?: string | null;
+          product_name?: string | null;
+          session_id: string;
+          user_agent?: string | null;
+          language?: string | null;
+          screen_w?: number | null;
+          screen_h?: number | null;
+          meta?: Json | null;
+        };
+        Update: {
+          event_type?: string;
+          page_path?: string | null;
+          referrer?: string | null;
+          utm_source?: string | null;
+          utm_medium?: string | null;
+          utm_campaign?: string | null;
+          utm_content?: string | null;
+          utm_term?: string | null;
+          fbclid?: string | null;
+          gclid?: string | null;
+          product_id?: string | null;
+          product_name?: string | null;
+          session_id?: string;
+          user_agent?: string | null;
+          language?: string | null;
+          screen_w?: number | null;
+          screen_h?: number | null;
+          meta?: Json | null;
+        };
+        Relationships: [];
+      };
     };
 
     // Required by Supabase GenericSchema
@@ -546,3 +633,4 @@ export type DbCoupon         = Database["public"]["Tables"]["coupons"]["Row"];
 export type DbMediaFile      = Database["public"]["Tables"]["media_files"]["Row"];
 export type DbStoreSettings  = Database["public"]["Tables"]["store_settings"]["Row"];
 export type DbHomepageSection = Database["public"]["Tables"]["homepage_sections"]["Row"];
+export type DbMarketingSiteEvent = Database["public"]["Tables"]["marketing_site_events"]["Row"];

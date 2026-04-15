@@ -4,16 +4,205 @@ import {
   PRODUCT_ITEMS,
   FONT_OPTIONS,
   MATERIAL_OPTIONS,
-  SIZE_OPTIONS,
+  STUDIO_VARIANT_BY_KEY,
   ICON_OPTIONS,
   SHIPPING_METHODS,
   PAYMENT_METHOD_OPTIONS,
 } from "./studio-data.js";
+import { formatShekelDisplay as formatPrice } from "./price-display.js";
+import { appendStudioDemoOrder, studioCustomerId, STUDIO_DEMO_ORDERS_KEY } from "./studio-demo-sync.js";
+import { initMarketingBeacon, trackProductView } from "./marketing-beacon.js";
+
+let runtimeCategories = [...PRODUCT_CATEGORIES];
+let runtimeItems = [];
+
+const DEFAULT_STUDIO_COLOR_KEYS = ["gold", "silver", "rose", "black"];
+
+function toStudioCategoryId(rawSlug = "", rawName = "") {
+  const slug = String(rawSlug).toLowerCase();
+  const name = String(rawName).toLowerCase();
+  if (slug.includes("bracelet") || name.includes("צמיד")) return "bracelets";
+  if (slug.includes("key") || name.includes("מחזיק")) return "keychains";
+  if (slug.includes("necklace") || name.includes("שרשר")) return "necklaces";
+  return "other";
+}
+
+function buildVariantsFromColors(colorKeys, imageUrls, fallbackImage) {
+  const keys =
+    colorKeys?.length > 0
+      ? colorKeys.filter((k) => STUDIO_VARIANT_BY_KEY[k])
+      : [...DEFAULT_STUDIO_COLOR_KEYS];
+  const urls = imageUrls?.length ? imageUrls : fallbackImage ? [fallbackImage] : [];
+  const img0 = urls[0] || fallbackImage || "";
+  return keys.map((k, i) => ({
+    ...STUDIO_VARIANT_BY_KEY[k],
+    image: urls[i % Math.max(urls.length, 1)] || img0,
+  }));
+}
+
+function enrichMockCatalogItem(p) {
+  const fromVariants = [...new Set(p.variants.map((v) => v.image).filter(Boolean))];
+  const imageUrls = p.imageUrls?.length ? [...p.imageUrls] : fromVariants;
+  return { ...p, imageUrls };
+}
+
+function buildApiBases() {
+  const host = window.location.hostname || "localhost";
+  return ["http://localhost:4444", `http://${host}:4444`, `http://${host}:3000`, ""];
+}
+
+/** +972 55-943-3968 — ברירת מחדל לסטודיו; ה־API יכול לדרוס אם מוגדר בפאנל */
+const DEFAULT_STUDIO_WHATSAPP = "972559433968";
+
+async function fetchWithTimeout(url, options = {}, ms = 5000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: ctrl.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function postJsonBases(path, jsonBody) {
+  for (const base of buildApiBases()) {
+    try {
+      const res = await fetchWithTimeout(
+        `${base}${path}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(jsonBody),
+        },
+        8000
+      );
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) return j;
+      return { ok: false, error: j.error || String(res.status) };
+    } catch {
+      /* try next base */
+    }
+  }
+  return null;
+}
+
+function clearCouponOnCartChange() {
+  if (state.couponApplied) {
+    state.couponApplied = null;
+    renderCouponBox();
+  }
+}
+
+function renderCouponBox() {
+  if (!couponBoxEl) return;
+  const a = state.couponApplied;
+  if (a) {
+    couponBoxEl.innerHTML = `<div class="coupon-row-inner coupon-applied">
+      <span>קופון <strong>${escHtml(a.code)}</strong> · הנחה ${formatPrice(a.discount)}</span>
+      <button type="button" class="btn secondary" data-action="remove-coupon">הסר</button>
+    </div>`;
+  } else {
+    couponBoxEl.innerHTML = `<div class="coupon-row-inner">
+      <input type="text" id="couponCodeInput" placeholder="הזן קוד קופון" dir="ltr" autocomplete="off" style="text-transform:uppercase" />
+      <button type="button" class="btn primary" data-action="apply-coupon">החל קופון</button>
+    </div>
+    <p id="couponErr" style="font-size:11px;margin-top:6px;color:#b91c1c;min-height:14px"></p>`;
+  }
+}
+
+async function applyCouponFromUi() {
+  const input = document.getElementById("couponCodeInput");
+  const errEl = document.getElementById("couponErr");
+  const code = (input?.value || "").trim();
+  if (!code) {
+    if (errEl) errEl.textContent = "הזן קוד קופון";
+    return;
+  }
+  const product = currentProduct();
+  if (!product) return;
+  const subtotal = product.price * state.customization.qty;
+  const res = await postJsonBases("/api/public/validate-coupon", { code, subtotal });
+  if (!res?.ok) {
+    if (errEl) errEl.textContent = res?.error || "לא ניתן לאמת את הקופון";
+    return;
+  }
+  if (errEl) errEl.textContent = "";
+  state.couponApplied = {
+    id: res.coupon_id,
+    code: res.coupon_code,
+    discount: Number(res.discount_amount) || 0,
+  };
+  renderCouponBox();
+  updatePricingUI();
+}
+
+function removeCoupon() {
+  state.couponApplied = null;
+  renderCouponBox();
+  updatePricingUI();
+}
+
+async function loadProductsFromDatabase() {
+  const bases = buildApiBases();
+  let rows = [];
+
+  for (const base of bases) {
+    try {
+      const res = await fetchWithTimeout(`${base}/api/public/products`, { headers: { Accept: "application/json" } });
+      if (!res.ok) continue;
+      const json = await res.json();
+      rows = Array.isArray(json?.products) ? json.products : [];
+      if (rows.length > 0) break;
+    } catch {
+      // try next candidate
+    }
+  }
+
+  const mockRows = PRODUCT_ITEMS.map(enrichMockCatalogItem);
+
+  if (!rows.length) {
+    runtimeItems = mockRows;
+    const existingCategories = new Set(runtimeItems.map((p) => p.category));
+    runtimeCategories = PRODUCT_CATEGORIES.filter((c) => existingCategories.has(c.id));
+    if (!runtimeCategories.length) runtimeCategories = [...PRODUCT_CATEGORIES];
+    return;
+  }
+
+  const mapped = rows
+    .filter((p) => p?.id && p?.name)
+    .map((p) => {
+      const category = p.studioCategory || toStudioCategoryId(p.categorySlug || "", p.categoryName || "");
+      const imgs = Array.isArray(p.images) && p.images.length ? p.images : p.image ? [p.image] : [];
+      const fallback =
+        p.image ||
+        "https://images.pexels.com/photos/10983791/pexels-photo-10983791.jpeg?auto=compress&cs=tinysrgb&w=900&h=900&fit=crop";
+      const variants = buildVariantsFromColors(p.studioColors, imgs, fallback);
+      return {
+        id: p.id,
+        category,
+        subcategory: p.subcategoryLabel ?? p.subcategoryName ?? p.categoryName ?? null,
+        title: p.name,
+        description: p.description || "",
+        price: Number(p.price) || 0,
+        allowCustomerImageUpload: !!p.allowCustomerImageUpload,
+        imageUrls: imgs.length ? imgs : [fallback],
+        variants: variants.length ? variants : [{ color: "ברירת מחדל", swatch: "#D4AF37", image: fallback }],
+      };
+    });
+
+  runtimeItems = mapped.length ? mapped : mockRows;
+
+  const existingCategories = new Set(runtimeItems.map((p) => p.category));
+  runtimeCategories = PRODUCT_CATEGORIES.filter((c) => existingCategories.has(c.id));
+  if (!runtimeCategories.length) runtimeCategories = [...PRODUCT_CATEGORIES];
+}
 
 const state = {
   step: 0,
-  selectedProductId: PRODUCT_ITEMS[0].id,
-  activeCategoryId: PRODUCT_CATEGORIES[0].id,
+  selectedProductId: "",
+  activeCategoryId: "",
+  previewGalleryIndex: 0,
+  whatsappPhone: "",
   previewAngle: "front",
   zoom: 1,
   rotate: 0,
@@ -33,13 +222,15 @@ const state = {
     position: "center",
     align: "center",
     materialId: MATERIAL_OPTIONS[0].id,
-    sizeId: SIZE_OPTIONS[1].id,
     qty: 1,
-    giftWrap: false,
-    extraAddon: "none",
     notes: "",
+    customerUpload: null,
     previewOffsets: { e1: { xPct: 26, yPct: 26 }, t1: { xPct: 50, yPct: 50 } },
   },
+  /** מספר הזמנה קבוע אחרי תשלום דמה — לתצוגה ול־localStorage */
+  placedOrderNumber: null,
+  /** { id, code, discount } אחרי אימות מול השרת */
+  couponApplied: null,
   checkout: {
     fullName: "",
     phone: "",
@@ -47,6 +238,7 @@ const state = {
     city: "",
     address: "",
     house: "",
+    aptFloor: "",
     zip: "",
     deliveryNotes: "",
     shippingId: SHIPPING_METHODS[0].id,
@@ -56,7 +248,7 @@ const state = {
     cvv: "",
     paymentMethod: "card",
   },
-  selectedVariantByProduct: Object.fromEntries(PRODUCT_ITEMS.map((p) => [p.id, 0])),
+  selectedVariantByProduct: Object.fromEntries(runtimeItems.map((p) => [p.id, 0])),
 };
 
 const $ = (s) => document.querySelector(s);
@@ -68,34 +260,39 @@ const categoryChipsEl = $("#categoryChips");
 const catalogSectionsEl = $("#catalogSections");
 const mockProductEl = $("#mockProduct");
 const mockEngraveSurfaceEl = $("#mockEngraveSurface");
-const priceSummaryEl = $("#priceSummary");
 const orderSummaryEl = $("#orderSummary");
 const finalSummaryEl = $("#finalSummary");
 const flowNav = $("#flowNav");
-const nextBtn = flowNav.querySelector('[data-action="next"]');
-const backBtn = flowNav.querySelector('[data-action="back"]');
+const nextBtn = document.querySelector('.app-shell [data-action="next"]');
+const backBtn = document.querySelector('.app-shell [data-action="back"]');
 
 const fontSelect = $("#fontSelect");
 const textSize = $("#textSize");
-const positionSelect = $("#positionSelect");
-const alignSelect = $("#alignSelect");
 const qtyInput = $("#qtyInput");
-const giftWrap = $("#giftWrap");
 const notesInput = $("#notesInput");
+const customerUploadBoxEl = $("#customerUploadBox");
+const previewGalleryEl = $("#previewGallery");
+const studioWhatsappBtn = $("#studioWhatsappBtn");
 const stageEl = document.querySelector(".stage");
 const textBlocksEl = $("#textBlocks");
 const emojiBlocksEl = $("#emojiBlocks");
 const addTextBlockBtn = $("#addTextBlock");
 const addEmojiBlockBtn = $("#addEmojiBlock");
-const extraAddonEl = $("#extraAddon");
 const emojiPickerEl = $("#emojiPicker");
 const walletMenuTrigger = $("#walletMenuTrigger");
 const walletMenu = $("#walletMenu");
 const walletTriggerInner = $("#walletTriggerInner");
 const cardFieldsGrid = $("#cardFieldsGrid");
 const walletMockHint = $("#walletMockHint");
+const couponBoxEl = $("#couponBox");
+const orderStatusLookupToggleBtn = $("#orderStatusLookupToggle");
+const orderStatusLookupFooterBtn = $("#orderStatusLookupFooterBtn");
+const orderStatusLookupPanel = $("#orderStatusLookupPanel");
+const orderStatusLookupInput = $("#orderStatusLookupInput");
+const orderStatusLookupBtn = $("#orderStatusLookupBtn");
+const orderStatusLookupMsg = $("#orderStatusLookupMsg");
+const orderStatusLookupTimeline = $("#orderStatusLookupTimeline");
 
-const formatPrice = (n) => `₪${Math.round(n).toLocaleString("he-IL")}`;
 const formatShippingFeeDisplay = (fee) => (fee <= 0 ? "חינם" : formatPrice(fee));
 
 function paymentOptionById(id) {
@@ -147,12 +344,59 @@ function renderWalletPaymentUI() {
   if (cardFieldsGrid) cardFieldsGrid.hidden = !isCard;
   if (walletMockHint) walletMockHint.hidden = isCard;
 }
-const categoryTitleById = Object.fromEntries(PRODUCT_CATEGORIES.map((c) => [c.id, c.title]));
-const currentProduct = () => PRODUCT_ITEMS.find((p) => p.id === state.selectedProductId) || PRODUCT_ITEMS[0];
+const categoryTitleById = () => Object.fromEntries(runtimeCategories.map((c) => [c.id, c.title]));
+const currentProduct = () => runtimeItems.find((p) => p.id === state.selectedProductId) || null;
+const currentProductSupportsCustomerUpload = () => !!currentProduct()?.allowCustomerImageUpload;
 const currentVariant = (product) => {
+  if (!product) return { color: "", swatch: "#f3eee7", image: "" };
   const idx = state.selectedVariantByProduct[product.id] || 0;
   return product.variants[idx] || product.variants[0];
 };
+
+function galleryUrlsForProduct(p) {
+  if (!p) return [];
+  if (Array.isArray(p.imageUrls) && p.imageUrls.length) return [...p.imageUrls];
+  const urls = [];
+  const seen = new Set();
+  for (const v of p.variants || []) {
+    if (v.image && !seen.has(v.image)) {
+      seen.add(v.image);
+      urls.push(v.image);
+    }
+  }
+  return urls;
+}
+
+function syncPreviewGalleryFromSelectedVariant() {
+  const p = currentProduct();
+  if (!p?.variants?.length) {
+    state.previewGalleryIndex = 0;
+    return;
+  }
+  const urls = galleryUrlsForProduct(p);
+  if (!urls.length) {
+    state.previewGalleryIndex = 0;
+    return;
+  }
+  const vIdx = Math.min(state.selectedVariantByProduct[p.id] ?? 0, p.variants.length - 1);
+  const v = p.variants[vIdx];
+  let idx = v?.image ? urls.indexOf(v.image) : -1;
+  if (idx < 0) idx = Math.min(vIdx, urls.length - 1);
+  state.previewGalleryIndex = ((idx % urls.length) + urls.length) % urls.length;
+}
+
+function syncVariantFromGallerySelection() {
+  const p = currentProduct();
+  if (!p?.variants?.length) return;
+  const urls = galleryUrlsForProduct(p);
+  if (!urls.length) return;
+  const n = urls.length;
+  const gi = ((state.previewGalleryIndex % n) + n) % n;
+  const url = urls[gi];
+  const vIdx = p.variants.findIndex((vv) => vv.image === url);
+  if (vIdx >= 0) state.selectedVariantByProduct[p.id] = vIdx;
+  else state.selectedVariantByProduct[p.id] = gi % p.variants.length;
+}
 const productIconByCategory = {
   necklaces: `<svg class="product-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a7.5 7.5 0 0 0-7.5 7.5c0 3 2.1 5.8 5 7.5l2.5 1.5 2.5-1.5c2.9-1.7 5-4.5 5-7.5A7.5 7.5 0 0 0 12 4Zm0 4.2a3.3 3.3 0 1 1 0 6.6 3.3 3.3 0 0 1 0-6.6Z"/></svg>`,
   bracelets: `<svg class="product-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5c-4.2 0-7.5 2.9-7.5 6.5s3.3 6.5 7.5 6.5 7.5-2.9 7.5-6.5-3.3-6.5-7.5-6.5Zm0 3.2c2.3 0 4.1 1.5 4.1 3.3S14.3 15.3 12 15.3 7.9 13.8 7.9 12 9.7 8.7 12 8.7Z"/></svg>`,
@@ -160,7 +404,6 @@ const productIconByCategory = {
   other: `<svg class="product-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8h15v10.5h-15V8Zm2-3h11l1.5 3h-14L6.5 5Zm5.5 6.2h0c-1.2 0-2.1.9-2.1 2.1s.9 2.1 2.1 2.1 2.1-.9 2.1-2.1-.9-2.1-2.1-2.1Z"/></svg>`,
 };
 const currentMaterial = () => MATERIAL_OPTIONS.find((m) => m.id === state.customization.materialId) || MATERIAL_OPTIONS[0];
-const currentSize = () => SIZE_OPTIONS.find((s) => s.id === state.customization.sizeId) || SIZE_OPTIONS[0];
 const currentShipping = () => SHIPPING_METHODS.find((s) => s.id === state.checkout.shippingId) || SHIPPING_METHODS[0];
 const currentFont = () => FONT_OPTIONS.find((f) => f.id === state.customization.fontId) || FONT_OPTIONS[0];
 
@@ -172,6 +415,138 @@ function escHtml(s) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/"/g, "&quot;");
+}
+
+function readLocalDemoOrdersSafe() {
+  try {
+    const raw = localStorage.getItem(STUDIO_DEMO_ORDERS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function generateFiveDigitOrderNumber() {
+  const used = new Set(readLocalDemoOrdersSafe().map((o) => String(o?.orderNumber || "")));
+  for (let i = 0; i < 24; i++) {
+    const candidate = String(10000 + Math.floor(Math.random() * 90000));
+    if (!used.has(candidate)) return candidate;
+  }
+  return String(10000 + Math.floor(Math.random() * 90000));
+}
+
+function normalizeOrderLookupInput(raw) {
+  const src = String(raw || "").trim();
+  if (!src) return "";
+  if (/^HG-\d{4}-\d{5}$/i.test(src)) return src.toUpperCase();
+  const digits = src.replace(/\D/g, "");
+  if (digits.length === 5) return digits;
+  if (digits.length > 5) return digits.slice(-5);
+  return src.toUpperCase();
+}
+
+function statusLabelForCustomer(status) {
+  const map = {
+    new: "התקבלה הזמנה",
+    pending: "התקבלה הזמנה",
+    processing: "בייצור",
+    shipped: "נשלחה",
+    completed: "נמסרה",
+    cancelled: "ההזמנה בוטלה",
+    refunded: "ההזמנה בוטלה",
+  };
+  return map[status] || status || "לא ידוע";
+}
+
+function renderStatusStepper(status) {
+  if (!orderStatusLookupTimeline) return;
+  const normalized = String(status || "new");
+  if (normalized === "cancelled" || normalized === "refunded") {
+    orderStatusLookupTimeline.innerHTML = `<li class="timeline-step timeline-step--done">
+      <div class="timeline-track"><span class="timeline-marker timeline-marker--check" aria-hidden="true">✓</span></div>
+      <span class="timeline-label">${statusLabelForCustomer(normalized)}</span>
+    </li>`;
+    orderStatusLookupTimeline.hidden = false;
+    return;
+  }
+  const stepsByStatus = { new: 0, pending: 0, processing: 1, shipped: 2, completed: 3 };
+  const activeIdx = stepsByStatus[normalized] ?? 0;
+  const labels = ["התקבלה", "בייצור", "נשלחה", normalized === "cancelled" || normalized === "refunded" ? "בוטלה" : "נמסרה"];
+  orderStatusLookupTimeline.innerHTML = labels
+    .map((label, i) => {
+      const done = i <= activeIdx;
+      return `<li class="timeline-step ${done ? "timeline-step--done" : ""}">
+        <div class="timeline-track">
+          <span class="timeline-marker ${done ? "timeline-marker--check" : "timeline-marker--dot"}" aria-hidden="true">${done ? "✓" : ""}</span>
+        </div>
+        <span class="timeline-label">${label}</span>
+      </li>`;
+    })
+    .join("");
+  orderStatusLookupTimeline.hidden = false;
+}
+
+function findLocalOrderByNumber(orderNumber) {
+  if (!orderNumber) return null;
+  return readLocalDemoOrdersSafe().find((o) => normalizeOrderLookupInput(o?.orderNumber) === orderNumber) || null;
+}
+
+async function fetchOrderStatusLookup(orderNumber) {
+  for (const base of buildApiBases()) {
+    try {
+      const url = `${base}/api/public/order-status?order_number=${encodeURIComponent(orderNumber)}`;
+      const res = await fetchWithTimeout(url, { headers: { Accept: "application/json" } }, 7000);
+      if (!res.ok) continue;
+      const data = await res.json().catch(() => null);
+      if (data?.order) return data.order;
+    } catch {
+      // try next base
+    }
+  }
+  return null;
+}
+
+async function runOrderStatusLookup() {
+  if (!orderStatusLookupInput || !orderStatusLookupMsg || !orderStatusLookupTimeline) return;
+  const orderNumber = normalizeOrderLookupInput(orderStatusLookupInput.value);
+  if (!orderNumber) {
+    orderStatusLookupMsg.textContent = "הקלד מספר הזמנה תקין.";
+    orderStatusLookupTimeline.hidden = true;
+    return;
+  }
+  orderStatusLookupBtn?.setAttribute("disabled", "disabled");
+  orderStatusLookupMsg.textContent = "מחפש הזמנה...";
+  orderStatusLookupTimeline.hidden = true;
+
+  let order = await fetchOrderStatusLookup(orderNumber);
+  if (!order) {
+    const local = findLocalOrderByNumber(orderNumber);
+    if (local) {
+      order = {
+        order_number: local.orderNumber,
+        status: local.status || "new",
+        updated_at: local.updatedAt || local.createdAt || new Date().toISOString(),
+      };
+    }
+  }
+
+  orderStatusLookupBtn?.removeAttribute("disabled");
+  if (!order) {
+    orderStatusLookupMsg.textContent = "לא נמצאה הזמנה עם המספר הזה.";
+    return;
+  }
+  orderStatusLookupMsg.textContent = `הזמנה ${order.order_number} · סטטוס נוכחי: ${statusLabelForCustomer(order.status)}`;
+  renderStatusStepper(order.status);
+}
+
+function openOrderStatusLookup(prefillOrderNumber = "") {
+  if (!orderStatusLookupPanel) return;
+  orderStatusLookupPanel.hidden = false;
+  if (orderStatusLookupInput && prefillOrderNumber) {
+    orderStatusLookupInput.value = prefillOrderNumber;
+  }
+  orderStatusLookupInput?.focus();
 }
 
 function clampPctVal(v) {
@@ -269,15 +644,159 @@ function emojiSummaryText() {
   return parts.length ? parts.join(" ") : "ללא";
 }
 
+function openCustomerUploadPicker() {
+  const input = document.getElementById("customerUploadInput");
+  input?.click();
+}
+
+function setCustomerUploadFile(file) {
+  if (!file) return;
+  const safeName = String(file.name || "image").slice(0, 120);
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.customization.customerUpload = {
+      name: safeName,
+      type: String(file.type || ""),
+      size: Number(file.size || 0),
+      previewUrl: typeof reader.result === "string" ? reader.result : "",
+    };
+    renderCustomerUploadBox();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderCustomerUploadBox() {
+  if (!customerUploadBoxEl) return;
+  if (!currentProductSupportsCustomerUpload()) {
+    customerUploadBoxEl.hidden = true;
+    customerUploadBoxEl.innerHTML = "";
+    state.customization.customerUpload = null;
+    return;
+  }
+  customerUploadBoxEl.hidden = false;
+  const up = state.customization.customerUpload;
+  customerUploadBoxEl.innerHTML = `
+    <label>העלאת תמונה אישית</label>
+    <div class="customer-upload-dropzone" id="customerUploadDropzone" role="button" tabindex="0" aria-label="העלאת תמונה אישית">
+      <strong>Drop here או לחצו להעלאה</strong>
+      <span>JPG / PNG / WEBP</span>
+      <input id="customerUploadInput" type="file" accept="image/*" hidden />
+    </div>
+    ${
+      up
+        ? `<div class="customer-upload-preview">
+            ${up.previewUrl ? `<img src="${escHtml(up.previewUrl)}" alt="קובץ שהועלה" />` : ""}
+            <p>${escHtml(up.name || "קובץ הועלה")}</p>
+          </div>`
+        : ""
+    }
+  `;
+  const input = document.getElementById("customerUploadInput");
+  const zone = document.getElementById("customerUploadDropzone");
+  zone?.addEventListener("click", openCustomerUploadPicker);
+  zone?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      openCustomerUploadPicker();
+    }
+  });
+  input?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) setCustomerUploadFile(file);
+  });
+  zone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    zone.classList.add("is-over");
+  });
+  zone?.addEventListener("dragleave", () => zone.classList.remove("is-over"));
+  zone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    zone.classList.remove("is-over");
+    const file = e.dataTransfer?.files?.[0];
+    if (file) setCustomerUploadFile(file);
+  });
+}
+
 function pricing() {
-  const base = currentProduct().price;
-  const gift = state.customization.giftWrap ? 14 : 0;
-  const addon = state.customization.extraAddon === "priority" ? 19 : state.customization.extraAddon === "doubleEngrave" ? 29 : 0;
-  const subtotal = (base * currentSize().multiplier + gift + addon) * state.customization.qty;
+  const product = currentProduct();
+  if (!product) return { subtotal: 0, shipping: 0, discount: 0, total: 0 };
+  const subtotal = product.price * state.customization.qty;
   const shipping = state.step >= 2 ? currentShipping().fee : 0;
-  const preVat = subtotal + shipping;
-  const vat = preVat * 0.17;
-  return { subtotal, shipping, addon, vat, total: preVat + vat };
+  const discount = state.couponApplied?.discount ?? 0;
+  const total = Math.max(0, subtotal + shipping - discount);
+  return { subtotal, shipping, discount, total };
+}
+
+function buildDemoStreetLine() {
+  const c = state.checkout;
+  const parts = [c.address, c.house].filter(Boolean);
+  return parts.join(" ") || "—";
+}
+
+/** מבנה כמו `StudioDemoOrderJson` בפאנל — נשמר ב-localStorage */
+function buildStudioDemoOrderPayload() {
+  const product = currentProduct();
+  if (!product) return null;
+  const variant = currentVariant(product);
+  const p = pricing();
+  const now = new Date().toISOString();
+  const orderNumber = generateFiveDigitOrderNumber();
+  const id = `studio-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const c = state.checkout;
+  const custId = studioCustomerId(c.phone, c.email);
+  const textLines = state.customization.textBlocks.map((b) => String(b.text).trim()).filter(Boolean).join(" | ");
+  const custBody = [
+    `טקסט: ${textLines || state.customization.text || "—"}`,
+    `סימנים: ${emojiSummaryText()}`,
+    `צבע: ${variant.color || "ברירת מחדל"}`,
+    `גימור: ${currentMaterial().label}`,
+    `כמות: ${state.customization.qty}`,
+  ];
+  if (state.customization.notes) custBody.push(`הערות מוצר: ${state.customization.notes}`);
+  if (state.customization.customerUpload?.name) {
+    custBody.push(`קובץ שהלקוח העלה: ${state.customization.customerUpload.name}`);
+  }
+  const notesParts = [];
+  if (c.deliveryNotes) notesParts.push(`הגעה למשלוח: ${c.deliveryNotes}`);
+  if (c.aptFloor) notesParts.push(`דירה/קומה: ${c.aptFloor}`);
+  const street = buildDemoStreetLine();
+  const payLabel = paymentOptionById(state.checkout.paymentMethod).label;
+  const qty = Math.max(1, state.customization.qty || 1);
+  const cop = state.couponApplied;
+  return {
+    id,
+    orderNumber,
+    customerId: custId,
+    customerName: (c.fullName || "").trim() || "לקוח",
+    customerEmail: (c.email || "").trim() || undefined,
+    customerPhone: (c.phone || "").trim() || undefined,
+    status: "new",
+    paymentStatus: "paid",
+    paymentMethod: payLabel,
+    shippingMethod: currentShipping().label,
+    subtotal: p.subtotal,
+    shippingCost: p.shipping,
+    discount: p.discount,
+    total: p.total,
+    ...(cop ? { couponId: cop.id, couponCode: cop.code } : {}),
+    shippingAddress: { street, city: (c.city || "").trim() || "—", zip: (c.zip || "").trim() || "—" },
+    items: [
+      {
+        productId: product.id,
+        productName: product.title,
+        productImage: variant.image || "",
+        sku: String(product.id).slice(0, 48),
+        quantity: qty,
+        price: p.subtotal / qty,
+        customization: custBody.join(" · "),
+      },
+    ],
+    notes: notesParts.length ? notesParts.join(" | ") : undefined,
+    timeline: [{ status: "new", timestamp: now, note: "הזמנה מהסטודיו (דמה)" }],
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 function renderProgress() {
@@ -300,39 +819,56 @@ function goToStep(target) {
   renderProgress();
   renderNav();
   updatePricingUI();
+  if (target === 2) renderCouponBox();
+  if (target === 1) {
+    syncPreviewGalleryFromSelectedVariant();
+    updatePreview();
+  }
 }
 
 function renderNav() {
   flowNav.style.display = state.step === 3 ? "none" : "flex";
-  backBtn.disabled = state.step === 0;
-  nextBtn.textContent = state.step === 2 ? "תשלום מאובטח (דמה)" : "המשך לשלב הבא";
+  if (nextBtn) nextBtn.style.display = state.step === 3 ? "none" : "";
+  if (backBtn) {
+    backBtn.style.display = state.step === 3 ? "none" : "";
+    backBtn.disabled = state.step === 0;
+  }
+  if (nextBtn) nextBtn.textContent = state.step === 2 ? "תשלום מאובטח (דמה)" : "המשך לשלב הבא";
 }
 
 function renderCategoryChips() {
-  categoryChipsEl.innerHTML = PRODUCT_CATEGORIES.map(
+  categoryChipsEl.innerHTML = runtimeCategories.map(
     (p) =>
       `<button class="chip ${state.activeCategoryId === p.id ? "active" : ""}" data-category-chip="${p.id}">${p.title}</button>`
   ).join("");
 }
 
 function renderCatalogSections() {
-  const category = PRODUCT_CATEGORIES.find((c) => c.id === state.activeCategoryId) || PRODUCT_CATEGORIES[0];
-  const items = PRODUCT_ITEMS.filter((p) => p.category === category.id);
+  if (!runtimeCategories.length) {
+    catalogSectionsEl.innerHTML = `<section class="catalog-section"><p class="step-sub">אין כרגע מוצרים זמינים בקטלוג.</p></section>`;
+    return;
+  }
+  const category = runtimeCategories.find((c) => c.id === state.activeCategoryId) || runtimeCategories[0];
+  const items = runtimeItems.filter((p) => p.category === category.id);
     const rowRenderer = (rowItems, subTitle = "", scrollable = true) => `
       <div class="catalog-row-wrap">
         ${subTitle ? `<h4 class="catalog-subtitle">${subTitle}</h4>` : ""}
         ${
           scrollable
             ? `<div class="catalog-row-shell">
-                <button class="row-nav-btn" type="button" data-row-nav="next" aria-label="המוצר הבא">›</button>
+                <button class="row-nav-btn" type="button" data-row-nav="next" aria-label="המוצר הבא">‹</button>
                 <div class="catalog-row">
                   ${rowItems
                     .map(
                       (p) => `<article class="product-card ${state.selectedProductId === p.id ? "selected" : ""}" data-product="${p.id}">
-                        <span class="product-category-label">${categoryTitleById[p.category] || "קטגוריה"}</span>
-                        <div class="product-image product-icon-stage" style="--product-bg:${currentVariant(p).swatch || "#f3eee7"}">
-                          ${productIconByCategory[p.category] || productIconByCategory.other}
-                        </div>
+                        <span class="product-category-label">${categoryTitleById()[p.category] || "קטגוריה"}</span>
+                        ${
+                          currentVariant(p).image
+                            ? `<img class="product-image" src="${currentVariant(p).image}" alt="${escHtml(p.title)}" loading="lazy" />`
+                            : `<div class="product-image product-icon-stage" style="--product-bg:${currentVariant(p).swatch || "#f3eee7"}">
+                                 ${productIconByCategory[p.category] || productIconByCategory.other}
+                               </div>`
+                        }
                         <h4 class="product-title">${p.title}</h4>
                         <strong class="product-price">${formatPrice(p.price)}</strong>
                         <div class="swatch-row">
@@ -348,16 +884,20 @@ function renderCatalogSections() {
                     )
                     .join("")}
                 </div>
-                <button class="row-nav-btn" type="button" data-row-nav="prev" aria-label="המוצר הקודם">‹</button>
+                <button class="row-nav-btn" type="button" data-row-nav="prev" aria-label="המוצר הקודם">›</button>
               </div>`
             : `<div class="catalog-grid-static">
                 ${rowItems
                   .map(
                     (p) => `<article class="product-card ${state.selectedProductId === p.id ? "selected" : ""}" data-product="${p.id}">
-                      <span class="product-category-label">${categoryTitleById[p.category] || "קטגוריה"}</span>
-                      <div class="product-image product-icon-stage" style="--product-bg:${currentVariant(p).swatch || "#f3eee7"}">
-                        ${productIconByCategory[p.category] || productIconByCategory.other}
-                      </div>
+                      <span class="product-category-label">${categoryTitleById()[p.category] || "קטגוריה"}</span>
+                      ${
+                        currentVariant(p).image
+                          ? `<img class="product-image" src="${currentVariant(p).image}" alt="${escHtml(p.title)}" loading="lazy" />`
+                          : `<div class="product-image product-icon-stage" style="--product-bg:${currentVariant(p).swatch || "#f3eee7"}">
+                               ${productIconByCategory[p.category] || productIconByCategory.other}
+                             </div>`
+                      }
                       <h4 class="product-title">${p.title}</h4>
                       <strong class="product-price">${formatPrice(p.price)}</strong>
                       <div class="swatch-row">
@@ -399,6 +939,48 @@ function renderCatalogSections() {
   `;
 }
 
+function currentProductGalleryUrls() {
+  return galleryUrlsForProduct(currentProduct());
+}
+
+const GALLERY_THUMB_FALLBACK =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56"><rect fill="#ede4dc" width="56" height="56" rx="10"/><path fill="none" stroke="#a08068" stroke-width="1.6" stroke-linecap="round" d="M20 34 L28 24 L36 34"/></svg>'
+  );
+
+function renderPreviewGallery() {
+  if (!previewGalleryEl) return;
+  const urls = currentProductGalleryUrls();
+  if (!urls.length) {
+    previewGalleryEl.hidden = true;
+    previewGalleryEl.innerHTML = "";
+    return;
+  }
+  previewGalleryEl.hidden = false;
+  const n = urls.length;
+  const idx = ((state.previewGalleryIndex % n) + n) % n;
+  const navDisabled = n <= 1 ? "disabled" : "";
+  previewGalleryEl.innerHTML = `<div class="preview-gallery-inner" dir="ltr">
+    <button type="button" class="gal-nav gal-nav--prev" data-gallery-nav="prev" aria-label="\u05d4\u05e7\u05d5\u05d3\u05dd" ${navDisabled}>\u2039</button>
+    <div class="gal-thumbs" role="list">
+      ${urls
+        .map(
+          (u, i) =>
+            `<button type="button" class="gal-thumb ${i === idx ? "active" : ""}" data-gallery-index="${i}" aria-label="\u05ea\u05de\u05d5\u05e0\u05d4 ${i + 1} \u05de-${n}">
+              <img src="${String(u).replace(/"/g, "&quot;")}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${GALLERY_THUMB_FALLBACK}'" />
+            </button>`
+        )
+        .join("")}
+    </div>
+    <button type="button" class="gal-nav gal-nav--next" data-gallery-nav="next" aria-label="\u05d4\u05d1\u05d0" ${navDisabled}>\u203a</button>
+  </div>`;
+  requestAnimationFrame(() => {
+    const active = previewGalleryEl.querySelector(".gal-thumb.active");
+    active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
+}
+
 function updatePreview() {
   const c = state.customization;
   const mat = currentMaterial();
@@ -407,8 +989,30 @@ function updatePreview() {
   const rotY = state.previewAngle === "front" ? 0 : state.previewAngle === "side" ? 32 : 10;
   const rotX = state.previewAngle === "top" ? 25 : 8;
 
+  const product = currentProduct();
+  mockProductEl.classList.remove(
+    "mock-product--necklaces",
+    "mock-product--bracelets",
+    "mock-product--keychains",
+    "mock-product--other"
+  );
+  if (product) mockProductEl.classList.add(`mock-product--${product.category}`);
+
   mockProductEl.dataset.finish = mat.id;
-  mockProductEl.style.background = mat.tone;
+  const urls = currentProductGalleryUrls();
+  const n = urls.length;
+  const gi = n ? ((state.previewGalleryIndex % n) + n) % n : 0;
+  const bgUrl = n ? urls[gi] : "";
+  if (bgUrl) {
+    mockProductEl.style.backgroundImage = `url("${String(bgUrl).replace(/"/g, "")}")`;
+    mockProductEl.style.backgroundSize = "cover";
+    mockProductEl.style.backgroundPosition = "center";
+    mockProductEl.style.backgroundColor = "#f3eee7";
+  } else {
+    mockProductEl.style.backgroundImage = "";
+    mockProductEl.style.background = mat.tone;
+  }
+
   const finalRotateY = rotY + state.dragRotateY;
   const finalRotateX = rotX + state.dragRotateX;
   mockProductEl.style.transform = `perspective(900px) rotateY(${finalRotateY}deg) rotateX(${finalRotateX}deg) rotate(${state.rotate}deg) scale(${state.zoom})`;
@@ -435,36 +1039,28 @@ function updatePreview() {
     .join("");
 
   mockEngraveSurfaceEl.innerHTML = emojiHtml + blocksHtml;
+  renderPreviewGallery();
 }
 
 function updatePricingUI() {
   const p = pricing();
   const selectedProduct = currentProduct();
+  if (!selectedProduct) {
+    orderSummaryEl.innerHTML = `<h3>סיכום הזמנה</h3><div class="summary-card">אין כרגע מוצר זמין להזמנה.</div>`;
+    finalSummaryEl.innerHTML = `<strong>אין מוצר נבחר</strong>`;
+    return;
+  }
   const selectedVariant = currentVariant(selectedProduct);
-  const addonsText =
-    state.customization.giftWrap || state.customization.extraAddon !== "none"
-      ? `אריזת מתנה: ${state.customization.giftWrap ? "₪14" : "₪0"}<br>
-         תוספת מיוחדת: ${
-           state.customization.extraAddon === "priority"
-             ? "תיעדוף ייצור ₪19"
-             : state.customization.extraAddon === "doubleEngrave"
-             ? "חריטה כפולה ₪29"
-             : "ללא ₪0"
-         }`
-      : "תוספות: ללא ₪0";
-  priceSummaryEl.innerHTML = `<strong>סיכום מחיר חי</strong><br>
-    מחיר בסיס: ${formatPrice(currentProduct().price)}<br>
-    ביניים: ${formatPrice(p.subtotal)}<br>
-    ${addonsText}<br>
-    משלוח (${currentShipping().label}): ${formatShippingFeeDisplay(p.shipping)}<br>
-    מע"מ (17%): ${formatPrice(p.vat)}<br>
-    <strong>סה"כ לתשלום: ${formatPrice(p.total)}</strong>`;
   orderSummaryEl.innerHTML = `<h3>סיכום הזמנה</h3>
     <div class="selected-product-card">
       <div class="selected-product-image-wrap">
-        <div class="selected-product-image product-icon-stage" style="--product-bg:${selectedVariant.swatch || "#f3eee7"}">
-          ${productIconByCategory[selectedProduct.category] || productIconByCategory.other}
-        </div>
+        ${
+          selectedVariant.image
+            ? `<img class="selected-product-image" src="${selectedVariant.image}" alt="${escHtml(selectedProduct.title)}" />`
+            : `<div class="selected-product-image product-icon-stage" style="--product-bg:${selectedVariant.swatch || "#f3eee7"}">
+                 ${productIconByCategory[selectedProduct.category] || productIconByCategory.other}
+               </div>`
+        }
       </div>
       <div class="selected-product-details">
         <strong class="selected-title">${selectedProduct.title}</strong>
@@ -473,23 +1069,30 @@ function updatePricingUI() {
         <span>גימור: ${currentMaterial().label}</span>
         <span>סימנים: ${emojiSummaryText()}</span>
         <span>חריטה: "${state.customization.text || "ללא טקסט"}"</span>
-        <span>מידה: ${currentSize().dimensions} · כמות: ${state.customization.qty}</span>
+        <span>כמות: ${state.customization.qty}</span>
         <span class="selected-status">סטטוס: זמין להתאמה אישית</span>
       </div>
     </div>
     <div class="summary-card">
+      <strong>סיכום מחיר</strong><br>
+      מחיר בסיס: ${formatPrice(selectedProduct.price)}<br>
       ביניים: ${formatPrice(p.subtotal)}<br>
-      משלוח: ${currentShipping().label} — ${formatShippingFeeDisplay(currentShipping().fee)}<br>
+      ${p.discount > 0 ? `קופון (${escHtml(state.couponApplied?.code || "")}): −${formatPrice(p.discount)}<br>` : ""}
+      משלוח (${currentShipping().label}): ${formatShippingFeeDisplay(p.shipping)}<br>
       אמצעי תשלום: ${paymentOptionById(state.checkout.paymentMethod).label}<br>
-      <strong>סה"כ: ${formatPrice(p.total)}</strong><br>
+      <strong>סה"כ לתשלום: ${formatPrice(p.total)}</strong><br>
+      <span style="font-size:11px;color:#7f6653">ללא מעמ — המחיר כפי שמוצג</span><br>
       זמן אספקה: ${currentShipping().eta}
     </div>`;
-  finalSummaryEl.innerHTML = `<strong>מספר הזמנה:</strong> HG-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 89999)}<br>
+  const orderNo =
+    state.step === 3 && state.placedOrderNumber
+      ? state.placedOrderNumber
+      : "-----";
+  finalSummaryEl.innerHTML = `<strong>מספר הזמנה:</strong> ${orderNo}<br>
       <strong>מוצר:</strong> ${selectedProduct.title}<br>
-      <strong>סימנים:</strong> ${emojiSummaryText()}<br>
-      <strong>חריטה:</strong> ${state.customization.text}<br>
-      <strong>משלוח:</strong> ${currentShipping().label} (${formatShippingFeeDisplay(currentShipping().fee)})<br>
-      <strong>תשלום:</strong> ${paymentOptionById(state.checkout.paymentMethod).label}`;
+      <strong>סטטוס:</strong> התקבלה הזמנה<br>
+      <strong>משלוח:</strong> ${currentShipping().label}<br>
+      <strong>סה"כ:</strong> ${formatPrice(p.total)}`;
 }
 
 function renderOptionRows() {
@@ -498,7 +1101,6 @@ function renderOptionRows() {
     const dark = m.id === "black-matte";
     return `<button class="opt-btn material-btn ${dark ? "material-btn--dark" : ""} ${state.customization.materialId === m.id ? "active" : ""}" data-material="${m.id}" style="--mat:${swatch}">${m.label}</button>`;
   }).join("");
-  $("#sizes").innerHTML = SIZE_OPTIONS.map((s, idx) => `<button class="opt-btn size-btn size-${idx + 1} ${state.customization.sizeId === s.id ? "active" : ""}" data-size="${s.id}">${s.label} · ${s.dimensions}</button>`).join("");
 }
 
 function renderEmojiBlocks() {
@@ -565,7 +1167,7 @@ function renderTextBlocks() {
 function renderCheckoutFields() {
   const fields = [
     ["fullName", "שם מלא"], ["phone", "טלפון"], ["email", "אימייל"], ["city", "עיר"],
-    ["address", "רחוב"], ["house", "מספר בית"], ["zip", "מיקוד"], ["deliveryNotes", "הערות לשליח"],
+    ["address", "רחוב"], ["house", "מספר בית"], ["aptFloor", "קומה / דירה"], ["zip", "מיקוד"], ["deliveryNotes", "הערות לשליח"],
   ];
   $("#checkoutFields").innerHTML = fields
     .map(([k, l]) => `<label>${l}${k === "deliveryNotes" ? `<textarea data-checkout="${k}">${state.checkout[k]}</textarea>` : `<input data-checkout="${k}" value="${state.checkout[k]}" />`}</label>`)
@@ -583,11 +1185,7 @@ function syncFormDefaults() {
   fontSelect.innerHTML = FONT_OPTIONS.map((f) => `<option value="${f.id}" ${f.id === state.customization.fontId ? "selected" : ""}>${f.label}</option>`).join("");
   fontSelect.value = state.customization.fontId;
   textSize.value = String(state.customization.size);
-  if (positionSelect) positionSelect.value = state.customization.position;
-  alignSelect.value = state.customization.align;
   qtyInput.value = String(state.customization.qty);
-  giftWrap.value = String(state.customization.giftWrap);
-  extraAddonEl.value = state.customization.extraAddon;
   notesInput.value = state.customization.notes;
   renderTextBlocks();
   renderEmojiBlocks();
@@ -729,14 +1327,27 @@ function setupEvents() {
     updatePricingUI();
   });
 
+  orderStatusLookupToggleBtn?.addEventListener("click", () => openOrderStatusLookup(state.placedOrderNumber || ""));
+  orderStatusLookupFooterBtn?.addEventListener("click", () => openOrderStatusLookup(state.placedOrderNumber || ""));
+  orderStatusLookupBtn?.addEventListener("click", () => {
+    runOrderStatusLookup();
+  });
+  orderStatusLookupInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runOrderStatusLookup();
+    }
+  });
+
   document.body.addEventListener("click", (e) => {
     if (!e.target.closest(".wallet-menu-wrap")) setWalletMenuOpen(false);
 
     const chip = e.target.closest("[data-category-chip]");
     if (chip && state.step === 0) {
+      clearCouponOnCartChange();
       state.activeCategoryId = chip.dataset.categoryChip;
       renderCategoryChips();
-      const firstInCategory = PRODUCT_ITEMS.find((p) => p.category === state.activeCategoryId);
+      const firstInCategory = runtimeItems.find((p) => p.category === state.activeCategoryId);
       if (firstInCategory) state.selectedProductId = firstInCategory.id;
       renderCatalogSections();
       updatePricingUI();
@@ -749,7 +1360,12 @@ function setupEvents() {
       const variantIndex = Number(swatchBtn.dataset.swatchIndex);
       state.selectedVariantByProduct[productId] = variantIndex;
       renderCatalogSections();
-      if (state.selectedProductId === productId) updatePricingUI();
+      if (state.selectedProductId === productId) {
+        renderCustomerUploadBox();
+        syncPreviewGalleryFromSelectedVariant();
+        updatePricingUI();
+        if (state.step === 1) updatePreview();
+      }
       return;
     }
 
@@ -780,7 +1396,12 @@ function setupEvents() {
 
     const productCard = e.target.closest("[data-product]");
     if (productCard && state.step === 0) {
+      clearCouponOnCartChange();
       state.selectedProductId = productCard.dataset.product;
+      const pv = runtimeItems.find((x) => x.id === state.selectedProductId);
+      if (pv) trackProductView(pv.id, pv.title);
+      if (!pv?.allowCustomerImageUpload) state.customization.customerUpload = null;
+      renderCustomerUploadBox();
       renderCatalogSections();
       const selected = catalogSectionsEl.querySelector(`[data-product="${state.selectedProductId}"]`);
       if (selected) selected.classList.add("picked");
@@ -856,12 +1477,38 @@ function setupEvents() {
       return;
     }
 
+    const galThumb = e.target.closest("[data-gallery-index]");
+    if (galThumb && previewGalleryEl?.contains(galThumb)) {
+      state.previewGalleryIndex = Number(galThumb.dataset.galleryIndex) || 0;
+      syncVariantFromGallerySelection();
+      updatePreview();
+      updatePricingUI();
+      return;
+    }
+    const galNav = e.target.closest("[data-gallery-nav]");
+    if (galNav && previewGalleryEl?.contains(galNav)) {
+      if (galNav.disabled) return;
+      const urls = currentProductGalleryUrls();
+      if (urls.length <= 1) return;
+      const n = urls.length;
+      if (galNav.dataset.galleryNav === "next") state.previewGalleryIndex += 1;
+      else state.previewGalleryIndex -= 1;
+      state.previewGalleryIndex = ((state.previewGalleryIndex % n) + n) % n;
+      syncVariantFromGallerySelection();
+      updatePreview();
+      updatePricingUI();
+      return;
+    }
+
     const matBtn = e.target.closest("[data-material]");
     if (matBtn) { state.customization.materialId = matBtn.dataset.material; renderOptionRows(); updatePreview(); }
-    const sizeBtn = e.target.closest("[data-size]");
-    if (sizeBtn) { state.customization.sizeId = sizeBtn.dataset.size; renderOptionRows(); updatePricingUI(); }
     const shipBtn = e.target.closest("[data-ship]");
-    if (shipBtn) { state.checkout.shippingId = shipBtn.dataset.ship; renderShippingMethods(); updatePricingUI(); }
+    if (shipBtn) {
+      clearCouponOnCartChange();
+      state.checkout.shippingId = shipBtn.dataset.ship;
+      renderShippingMethods();
+      updatePricingUI();
+    }
 
     if (e.target.matches('[data-action="back"]')) goToStep(state.step - 1);
     if (e.target.matches('[data-action="next"]')) {
@@ -870,6 +1517,15 @@ function setupEvents() {
         nextBtn.disabled = true;
         nextBtn.textContent = "מעבד תשלום...";
         setTimeout(() => {
+          const payload = buildStudioDemoOrderPayload();
+          if (payload) {
+            appendStudioDemoOrder(payload);
+            state.placedOrderNumber = payload.orderNumber;
+            if (orderStatusLookupInput) orderStatusLookupInput.value = payload.orderNumber;
+            if (payload.couponId) {
+              postJsonBases("/api/public/redeem-coupon", { coupon_id: payload.couponId });
+            }
+          }
           state.processing = false;
           nextBtn.disabled = false;
           goToStep(3);
@@ -878,7 +1534,21 @@ function setupEvents() {
         goToStep(state.step + 1);
       }
     }
-    if (e.target.matches('[data-action="restart"]')) goToStep(0);
+    if (e.target.matches('[data-action="restart"]')) {
+      state.placedOrderNumber = null;
+      state.couponApplied = null;
+      renderCouponBox();
+      goToStep(0);
+    }
+
+    if (e.target.matches('[data-action="apply-coupon"]')) {
+      e.preventDefault();
+      applyCouponFromUi();
+    }
+    if (e.target.matches('[data-action="remove-coupon"]')) {
+      e.preventDefault();
+      removeCoupon();
+    }
   });
 
   addTextBlockBtn?.addEventListener("click", () => {
@@ -929,15 +1599,11 @@ function setupEvents() {
 
   fontSelect.addEventListener("change", (e) => { state.customization.fontId = e.target.value; updatePreview(); });
   textSize.addEventListener("input", (e) => { state.customization.size = Number(e.target.value); updatePreview(); });
-  positionSelect?.addEventListener("change", (e) => {
-    state.customization.position = e.target.value;
-    redistributeTextLinesVertical();
-    updatePreview();
+  qtyInput.addEventListener("input", (e) => {
+    clearCouponOnCartChange();
+    state.customization.qty = Math.max(1, Number(e.target.value) || 1);
+    updatePricingUI();
   });
-  alignSelect.addEventListener("change", (e) => { state.customization.align = e.target.value; updatePreview(); });
-  qtyInput.addEventListener("input", (e) => { state.customization.qty = Math.max(1, Number(e.target.value) || 1); updatePricingUI(); });
-  giftWrap.addEventListener("change", (e) => { state.customization.giftWrap = e.target.value === "true"; updatePricingUI(); });
-  extraAddonEl.addEventListener("change", (e) => { state.customization.extraAddon = e.target.value; updatePricingUI(); });
   notesInput.addEventListener("input", (e) => { state.customization.notes = e.target.value; });
 
   document.body.addEventListener("input", (e) => {
@@ -946,7 +1612,51 @@ function setupEvents() {
   });
 }
 
-function init() {
+function normalizeStudioWhatsappDigits(value) {
+  let raw = String(value || "").replace(/\D/g, "");
+  if (!raw) return null;
+  if (raw.startsWith("972")) return raw;
+  if (raw.startsWith("0")) return "972" + raw.slice(1);
+  if (raw.length >= 9) return "972" + raw;
+  return raw;
+}
+
+function applyStudioWhatsappButton(digits) {
+  const d = digits || DEFAULT_STUDIO_WHATSAPP;
+  state.whatsappPhone = d;
+  if (studioWhatsappBtn) {
+    studioWhatsappBtn.href = `https://wa.me/${d}`;
+    studioWhatsappBtn.hidden = false;
+  }
+}
+
+async function loadSiteMeta() {
+  let fromApi = null;
+  const bases = buildApiBases();
+  for (const base of bases) {
+    try {
+      const res = await fetchWithTimeout(`${base}/api/public/site`, { headers: { Accept: "application/json" } });
+      if (!res.ok) continue;
+      const j = await res.json();
+      fromApi = normalizeStudioWhatsappDigits(j.whatsapp);
+      if (fromApi) break;
+    } catch {
+      /* next base */
+    }
+  }
+  applyStudioWhatsappButton(fromApi || DEFAULT_STUDIO_WHATSAPP);
+}
+
+async function init() {
+  const qs = new URLSearchParams(window.location.search);
+  const openStatusLookupFromLanding = qs.get("status") === "1";
+  initMarketingBeacon({ context: "studio" });
+  await Promise.all([loadProductsFromDatabase(), loadSiteMeta()]);
+  state.selectedVariantByProduct = Object.fromEntries(runtimeItems.map((p) => [p.id, 0]));
+  state.activeCategoryId = runtimeCategories[0]?.id || state.activeCategoryId;
+  state.selectedProductId =
+    runtimeItems.find((p) => p.category === state.activeCategoryId)?.id || runtimeItems[0]?.id || state.selectedProductId;
+
   migrateCustomizationLayout();
   renderProgress();
   renderNav();
@@ -957,11 +1667,17 @@ function init() {
   renderShippingMethods();
   renderWalletPaymentUI();
   syncFormDefaults();
+  renderCustomerUploadBox();
   ensurePreviewOffsets();
   redistributeTextLinesVertical();
   updatePreview();
   updatePricingUI();
   setupEvents();
+  renderCouponBox();
+  if (openStatusLookupFromLanding) {
+    goToStep(3);
+    openOrderStatusLookup("");
+  }
 }
 
 init();

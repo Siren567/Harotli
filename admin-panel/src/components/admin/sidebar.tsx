@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, ShoppingBag, Package, Boxes,
-  Tag, Users, Ticket, FileText, Image, Settings, Gem,
+  LayoutDashboard, LayoutTemplate, ShoppingBag, Package, Boxes,
+  Tag, Users, Ticket, Settings, Gem,
   ChevronRight,
 } from "lucide-react";
 
@@ -12,12 +12,11 @@ const navItems = [
   { href: "/admin", label: "לוח בקרה", icon: LayoutDashboard, exact: true },
   { href: "/admin/orders", label: "הזמנות", icon: ShoppingBag },
   { href: "/admin/products", label: "מוצרים", icon: Package },
+  { href: "/admin/homepage", label: "עמוד בית", icon: LayoutTemplate },
   { href: "/admin/inventory", label: "מלאי", icon: Boxes },
   { href: "/admin/categories", label: "קטגוריות", icon: Tag },
   { href: "/admin/customers", label: "לקוחות", icon: Users },
   { href: "/admin/discounts", label: "הנחות וקופונים", icon: Ticket },
-  { href: "/admin/content", label: "תוכן", icon: FileText },
-  { href: "/admin/media", label: "מדיה", icon: Image },
   { href: "/admin/settings", label: "הגדרות", icon: Settings },
 ];
 

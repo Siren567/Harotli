@@ -7,10 +7,50 @@ import type { Database, DbOrder, DbOrderItem, DbOrderTimeline } from "@/types/da
 import type { OrderWithDetails, OrderStatus } from "@/types";
 import { mockOrders } from "@/lib/mock-data";
 import { isSupabaseConfigured } from "@/lib/auth";
+import { mergeDemoDbOrders, mergeDemoOrdersWithDetails } from "@/lib/studio-demo-storage";
 
 type SB = SupabaseClient<Database>;
 
+function normalizeOrderRow(row: Partial<DbOrder> & { id: string }): DbOrder {
+  const orderNumber = String((row as { order_number?: string }).order_number ?? "").trim();
+  const customerName = String((row as { customer_name?: string }).customer_name ?? "").trim();
+  const total = Number(row.total ?? 0);
+  const shipping = Number((row as { shipping_cost?: number }).shipping_cost ?? 0);
+  const discount = Number((row as { discount_amount?: number }).discount_amount ?? 0);
+  const subtotalRaw = Number((row as { subtotal?: number }).subtotal ?? NaN);
+  const subtotal = Number.isFinite(subtotalRaw) ? subtotalRaw : Math.max(0, total + discount - shipping);
+
+  return {
+    ...(row as DbOrder),
+    order_number: orderNumber || row.id.slice(0, 8),
+    customer_name: customerName || row.customer_email || row.customer_phone || "לקוח",
+    payment_status: (row.payment_status ?? "paid") as DbOrder["payment_status"],
+    subtotal,
+    shipping_cost: shipping,
+    discount_amount: discount,
+    total,
+  };
+}
+
+function normalizeOrderItemRow(row: Partial<DbOrderItem> & { id: string; order_id: string }): DbOrderItem {
+  const qty = Number(row.quantity ?? 1) || 1;
+  const unitRaw = Number((row as { unit_price?: number; price?: number }).unit_price ?? (row as { price?: number }).price ?? 0);
+  const totalRaw = Number(row.total_price ?? unitRaw * qty);
+  return {
+    ...(row as DbOrderItem),
+    product_name: row.product_name || "פריט בהזמנה",
+    unit_price: unitRaw,
+    total_price: totalRaw,
+    quantity: qty,
+  };
+}
+
 // ─── Mock adapter ─────────────────────────────────────────────────────────────
+
+/** הזמנות mock + הזמנות שנשמרו מסטודיו (localStorage) — לשימוש בלוח בקרה וב־getOrders */
+export function getMergedMockDbOrderRows(): DbOrder[] {
+  return mergeDemoDbOrders(mockToDbOrders());
+}
 
 function mockToDbOrders(): DbOrder[] {
   return mockOrders.map((o) => ({
@@ -118,7 +158,7 @@ export async function getOrders(
   } = opts;
 
   if (!isSupabaseConfigured()) {
-    let list = mockToDbOrders();
+    let list = getMergedMockDbOrderRows();
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -155,8 +195,32 @@ export async function getOrders(
 
   const { data, error, count } = await query;
   if (error) throw new Error(`getOrders: ${error.message}`);
+  let list = ((data ?? []) as Array<Partial<DbOrder> & { id: string }>).map(normalizeOrderRow);
+  // Client-side merge: when admin runs with Supabase, still show local demo checkout orders.
+  if (typeof window !== "undefined") {
+    list = mergeDemoDbOrders(list);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (o) =>
+          o.order_number.toLowerCase().includes(q) ||
+          o.customer_name.toLowerCase().includes(q) ||
+          (o.customer_phone ?? "").includes(q)
+      );
+    }
+    if (status !== "all") list = list.filter((o) => o.status === status);
+    list.sort((a, b) => {
+      const va = sortBy === "total" ? a.total : sortBy === "status" ? a.status : a.created_at;
+      const vb = sortBy === "total" ? b.total : sortBy === "status" ? b.status : b.created_at;
+      if (va < vb) return sortDir === "asc" ? -1 : 1;
+      if (va > vb) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    const total = list.length;
+    return { orders: list.slice((page - 1) * perPage, page * perPage), total };
+  }
 
-  return { orders: data ?? [], total: count ?? 0 };
+  return { orders: list, total: count ?? list.length };
 }
 
 // ─── READ (single with items + timeline) ─────────────────────────────────────
@@ -166,7 +230,7 @@ export async function getOrderById(
   id: string
 ): Promise<OrderWithDetails | null> {
   if (!isSupabaseConfigured()) {
-    return mockToOrderWithDetails().find((o) => o.id === id) ?? null;
+    return mergeDemoOrdersWithDetails(mockToOrderWithDetails()).find((o) => o.id === id) ?? null;
   }
 
   const { data, error } = await sb
@@ -183,8 +247,8 @@ export async function getOrderById(
   };
 
   return {
-    ...row,
-    items: row.order_items ?? [],
+    ...normalizeOrderRow(row),
+    items: (row.order_items ?? []).map((it) => normalizeOrderItemRow(it as Partial<DbOrderItem> & { id: string; order_id: string })),
     timeline: (row.order_timeline ?? []).sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     ),

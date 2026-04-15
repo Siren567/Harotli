@@ -42,6 +42,7 @@ create table if not exists products (
                          check (status in ('active','hidden','draft','out_of_stock')),
   is_featured          boolean not null default false,
   tags                 text[] not null default '{}',
+  studio_colors        text[] not null default array['gold','silver','rose','black']::text[],
   seo_title            text,
   seo_description      text,
   created_at           timestamptz not null default now(),
@@ -66,6 +67,17 @@ create table if not exists product_images (
 );
 
 create index on product_images(product_id);
+
+-- ─────────────────────────────────────────────────────────────
+-- PRODUCT ↔ CATEGORY (many-to-many, leaf categories)
+-- ─────────────────────────────────────────────────────────────
+create table if not exists product_category_assignments (
+  product_id  uuid not null references products(id) on delete cascade,
+  category_id uuid not null references categories(id) on delete cascade,
+  primary key (product_id, category_id)
+);
+
+create index on product_category_assignments(category_id);
 
 -- ─────────────────────────────────────────────────────────────
 -- INVENTORY
@@ -299,6 +311,7 @@ alter table coupons            enable row level security;
 alter table media_files        enable row level security;
 alter table store_settings     enable row level security;
 alter table homepage_sections  enable row level security;
+alter table product_category_assignments enable row level security;
 
 -- Policies: only authenticated users can read/write (admin auth via Supabase Auth)
 -- Replace with more granular policies as needed.
@@ -339,4 +352,7 @@ create policy "Authenticated full access" on store_settings
   for all using (auth.role() = 'authenticated');
 
 create policy "Authenticated full access" on homepage_sections
+  for all using (auth.role() = 'authenticated');
+
+create policy "Authenticated full access" on product_category_assignments
   for all using (auth.role() = 'authenticated');

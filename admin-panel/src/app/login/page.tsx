@@ -2,14 +2,14 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Lock, Mail, Gem, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, User, Gem, AlertCircle } from "lucide-react";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/admin";
 
-  const [email, setEmail]       = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
   const [loading, setLoading]   = useState(false);
@@ -24,7 +24,7 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await res.json();
@@ -121,20 +121,20 @@ function LoginForm() {
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {/* Email */}
+            {/* Username */}
             <div>
               <label style={{ fontSize: "12px", fontWeight: 500, color: "var(--muted-foreground)", display: "block", marginBottom: "7px" }}>
-                אימייל
+                שם משתמש
               </label>
               <div style={{ position: "relative" }}>
                 <span style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--muted-foreground)", display: "flex" }}>
-                  <Mail size={15} />
+                  <User size={15} />
                 </span>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="admin@harotli.co.il"
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  placeholder="root"
                   required
                   autoFocus
                   style={inputStyle(!!error)}
@@ -243,21 +243,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Dev hint — shown only when Supabase not configured */}
-          <div
-            style={{
-              marginTop: "20px",
-              padding: "10px 12px",
-              background: "rgba(59,130,246,0.08)",
-              border: "1px solid rgba(59,130,246,0.2)",
-              borderRadius: "8px",
-              fontSize: "11px",
-              color: "rgba(147,197,253,0.8)",
-              lineHeight: 1.5,
-            }}
-          >
-            <strong>מצב פיתוח:</strong> admin@harotli.co.il / harotli2024
-          </div>
         </div>
 
         <p style={{ textAlign: "center", color: "var(--muted-foreground)", fontSize: "11px", marginTop: "20px" }}>

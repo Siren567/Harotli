@@ -1,3 +1,139 @@
+/** סנכרון עם admin-panel/studio-demo-storage — אותו מפתח localStorage */
+const STUDIO_DEMO_ORDERS_KEY = "harotli_studio_demo_orders_v2";
+function studioCustomerId(phone, email) {
+  const raw = `${String(phone || "").trim()}|${String(email || "").trim().toLowerCase()}`;
+  let h = 0;
+  for (let i = 0; i < raw.length; i++) h = (Math.imul(31, h) + raw.charCodeAt(i)) | 0;
+  return `studio-${Math.abs(h).toString(36)}`;
+}
+function appendStudioDemoOrder(order) {
+  try {
+    const raw = localStorage.getItem(STUDIO_DEMO_ORDERS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(arr)) {
+      localStorage.setItem(STUDIO_DEMO_ORDERS_KEY, JSON.stringify([order]));
+      return;
+    }
+    arr.unshift(order);
+    while (arr.length > 200) arr.pop();
+    localStorage.setItem(STUDIO_DEMO_ORDERS_KEY, JSON.stringify(arr));
+  } catch (e) {
+    console.warn("[studio-demo-sync] appendStudioDemoOrder:", e);
+  }
+}
+
+function readLocalDemoOrdersSafe() {
+  try {
+    const raw = localStorage.getItem(STUDIO_DEMO_ORDERS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function generateFiveDigitOrderNumber() {
+  const used = new Set(readLocalDemoOrdersSafe().map((o) => String(o?.orderNumber || "")));
+  for (let i = 0; i < 24; i++) {
+    const candidate = String(10000 + Math.floor(Math.random() * 90000));
+    if (!used.has(candidate)) return candidate;
+  }
+  return String(10000 + Math.floor(Math.random() * 90000));
+}
+
+function buildApiBases() {
+  const host = window.location.hostname || "localhost";
+  return ["http://localhost:4444", `http://${host}:4444`, `http://${host}:3000`, ""];
+}
+async function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...options, signal: ctrl.signal });
+  } finally {
+    clearTimeout(id);
+  }
+}
+async function postJsonBases(path, jsonBody) {
+  for (const base of buildApiBases()) {
+    try {
+      const res = await fetchWithTimeout(
+        `${base}${path}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(jsonBody),
+        },
+        8000
+      );
+      const j = await res.json().catch(() => ({}));
+      if (res.ok) return j;
+      return { ok: false, error: j.error || String(res.status) };
+    } catch {
+      /* next */
+    }
+  }
+  return null;
+}
+
+function clearCouponOnCartChangeShopify() {
+  if (state.couponApplied) {
+    state.couponApplied = null;
+    renderCouponBoxShopify();
+  }
+}
+
+function renderCouponBoxShopify() {
+  if (!couponBoxEl) return;
+  const a = state.couponApplied;
+  if (a) {
+    couponBoxEl.innerHTML = `<div class="coupon-row-inner coupon-applied">
+      <span>קופון <strong>${escHtml(a.code)}</strong> · הנחה ${formatPrice(a.discount)}</span>
+      <button type="button" class="btn secondary" data-action="remove-coupon">הסר</button>
+    </div>`;
+  } else {
+    couponBoxEl.innerHTML = `<div class="coupon-row-inner">
+      <input type="text" id="couponCodeInput" placeholder="הזן קוד קופון" dir="ltr" autocomplete="off" style="text-transform:uppercase" />
+      <button type="button" class="btn primary" data-action="apply-coupon">החל קופון</button>
+    </div>
+    <p id="couponErr" style="font-size:11px;margin-top:6px;color:#b91c1c;min-height:14px"></p>`;
+  }
+}
+
+async function applyCouponFromUiShopify() {
+  const input = document.getElementById("couponCodeInput");
+  const errEl = document.getElementById("couponErr");
+  const code = (input?.value || "").trim();
+  if (!code) {
+    if (errEl) errEl.textContent = "הזן קוד קופון";
+    return;
+  }
+  const product = currentProduct();
+  if (!product) return;
+  const gift = state.customization.giftWrap ? 14 : 0;
+  const addon = state.customization.extraAddon === "priority" ? 19 : state.customization.extraAddon === "doubleEngrave" ? 29 : 0;
+  const subtotal = (product.price * currentSize().multiplier + gift + addon) * state.customization.qty;
+  const res = await postJsonBases("/api/public/validate-coupon", { code, subtotal });
+  if (!res?.ok) {
+    if (errEl) errEl.textContent = res?.error || "לא ניתן לאמת את הקופון";
+    return;
+  }
+  if (errEl) errEl.textContent = "";
+  state.couponApplied = {
+    id: res.coupon_id,
+    code: res.coupon_code,
+    discount: Number(res.discount_amount) || 0,
+  };
+  renderCouponBoxShopify();
+  updatePricingUI();
+}
+
+function removeCouponShopify() {
+  state.couponApplied = null;
+  renderCouponBoxShopify();
+  updatePricingUI();
+}
+
 const STUDIO_STEPS = ["בחירת מוצר", "התאמה אישית", "משלוח ותשלום", "אישור"];
 
 const PRODUCT_CATEGORIES = [
@@ -197,6 +333,8 @@ const PAYMENT_METHOD_OPTIONS = [
 
 const state = {
   step: 0,
+  placedOrderNumber: null,
+  couponApplied: null,
   selectedProductId: PRODUCT_ITEMS[0].id,
   activeCategoryId: PRODUCT_CATEGORIES[0].id,
   previewAngle: "front",
@@ -232,6 +370,7 @@ const state = {
     city: "",
     address: "",
     house: "",
+    aptFloor: "",
     zip: "",
     deliveryNotes: "",
     shippingId: SHIPPING_METHODS[0].id,
@@ -253,12 +392,11 @@ const categoryChipsEl = $("#categoryChips");
 const catalogSectionsEl = $("#catalogSections");
 const mockProductEl = $("#mockProduct");
 const mockEngraveSurfaceEl = $("#mockEngraveSurface");
-const priceSummaryEl = $("#priceSummary");
 const orderSummaryEl = $("#orderSummary");
 const finalSummaryEl = $("#finalSummary");
 const flowNav = $("#flowNav");
-const nextBtn = flowNav.querySelector('[data-action="next"]');
-const backBtn = flowNav.querySelector('[data-action="back"]');
+const nextBtn = document.querySelector('.app-shell [data-action="next"]');
+const backBtn = document.querySelector('.app-shell [data-action="back"]');
 
 const fontSelect = $("#fontSelect");
 const textSize = $("#textSize");
@@ -279,8 +417,24 @@ const walletMenu = $("#walletMenu");
 const walletTriggerInner = $("#walletTriggerInner");
 const cardFieldsGrid = $("#cardFieldsGrid");
 const walletMockHint = $("#walletMockHint");
+const couponBoxEl = $("#couponBox");
 
-const formatPrice = (n) => `₪${Math.round(n).toLocaleString("he-IL")}`;
+/** תצוגת מחיר (כמו price-display.js): שלם עם ספרת אחדות 0 או 4 → (N−1).90, אחרת N.90; לא שלם → שתי ספרות כרגיל. */
+function formatPrice(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return "₪0.00";
+  if (num < 0) return "₪0.00";
+  const agorot = Math.round(num * 100);
+  if (agorot === 0) return "₪0.00";
+  if (agorot % 100 !== 0) {
+    return `₪${(agorot / 100).toLocaleString("he-IL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  const shekels = agorot / 100;
+  const last = shekels % 10;
+  const base = last === 0 || last === 4 ? shekels - 1 : shekels;
+  const displayAgorot = base * 100 + 90;
+  return `₪${(displayAgorot / 100).toLocaleString("he-IL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 const formatShippingFeeDisplay = (fee) => (fee <= 0 ? "חינם" : formatPrice(fee));
 
 function paymentOptionById(id) {
@@ -460,9 +614,85 @@ function pricing() {
   const addon = state.customization.extraAddon === "priority" ? 19 : state.customization.extraAddon === "doubleEngrave" ? 29 : 0;
   const subtotal = (base * currentSize().multiplier + gift + addon) * state.customization.qty;
   const shipping = state.step >= 2 ? currentShipping().fee : 0;
-  const preVat = subtotal + shipping;
+  const discount = state.couponApplied?.discount ?? 0;
+  const subAfter = Math.max(0, subtotal - discount);
+  const preVat = subAfter + shipping;
   const vat = preVat * 0.17;
-  return { subtotal, shipping, addon, vat, total: preVat + vat };
+  return { subtotal, discount, shipping, addon, vat, total: preVat + vat };
+}
+
+function buildShopifyDemoStreetLine() {
+  const c = state.checkout;
+  const parts = [c.address, c.house].filter(Boolean);
+  return parts.join(" ") || "—";
+}
+
+function buildStudioDemoOrderPayloadShopify() {
+  const product = currentProduct();
+  if (!product) return null;
+  const variant = currentVariant(product);
+  const p = pricing();
+  const now = new Date().toISOString();
+  const orderNumber = generateFiveDigitOrderNumber();
+  const id = `studio-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const c = state.checkout;
+  const custId = studioCustomerId(c.phone, c.email);
+  const textLines = state.customization.textBlocks.map((b) => String(b.text).trim()).filter(Boolean).join(" | ");
+  const extras = [];
+  if (state.customization.giftWrap) extras.push("אריזת מתנה");
+  if (state.customization.extraAddon === "priority") extras.push("תיעדוף ייצור");
+  if (state.customization.extraAddon === "doubleEngrave") extras.push("חריטה כפולה");
+  const custBody = [
+    `טקסט: ${textLines || state.customization.text || "—"}`,
+    `סימנים: ${emojiSummaryText()}`,
+    `צבע: ${variant.color || "ברירת מחדל"}`,
+    `גימור: ${currentMaterial().label}`,
+    `מידה: ${currentSize().dimensions}`,
+    `כמות: ${state.customization.qty}`,
+    extras.length ? `תוספות: ${extras.join(", ")}` : null,
+  ].filter(Boolean);
+  if (state.customization.notes) custBody.push(`הערות מוצר: ${state.customization.notes}`);
+  const notesParts = [];
+  if (c.deliveryNotes) notesParts.push(`הגעה למשלוח: ${c.deliveryNotes}`);
+  if (c.aptFloor) notesParts.push(`דירה/קומה: ${c.aptFloor}`);
+  const street = buildShopifyDemoStreetLine();
+  const payLabel = paymentOptionById(state.checkout.paymentMethod).label;
+  const qty = Math.max(1, state.customization.qty || 1);
+  const cop = state.couponApplied;
+  const lineNet = Math.max(0, p.subtotal - (p.discount ?? 0));
+  return {
+    id,
+    orderNumber,
+    customerId: custId,
+    customerName: (c.fullName || "").trim() || "לקוח",
+    customerEmail: (c.email || "").trim() || undefined,
+    customerPhone: (c.phone || "").trim() || undefined,
+    status: "new",
+    paymentStatus: "paid",
+    paymentMethod: payLabel,
+    shippingMethod: currentShipping().label,
+    subtotal: p.subtotal,
+    shippingCost: p.shipping,
+    discount: p.discount ?? 0,
+    total: p.total,
+    ...(cop ? { couponId: cop.id, couponCode: cop.code } : {}),
+    shippingAddress: { street, city: (c.city || "").trim() || "—", zip: (c.zip || "").trim() || "—" },
+    items: [
+      {
+        productId: product.id,
+        productName: product.title,
+        productImage: variant.image || "",
+        sku: String(product.id).slice(0, 48),
+        quantity: qty,
+        price: lineNet / qty,
+        customization: custBody.join(" · "),
+      },
+    ],
+    notes: notesParts.length ? notesParts.join(" | ") : undefined,
+    timeline: [{ status: "new", timestamp: now, note: "הזמנה מהסטודיו (דמה)" }],
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 function renderProgress() {
@@ -485,12 +715,17 @@ function goToStep(target) {
   renderProgress();
   renderNav();
   updatePricingUI();
+  if (target === 2) renderCouponBoxShopify();
 }
 
 function renderNav() {
   flowNav.style.display = state.step === 3 ? "none" : "flex";
-  backBtn.disabled = state.step === 0;
-  nextBtn.textContent = state.step === 2 ? "תשלום מאובטח (דמה)" : "המשך לשלב הבא";
+  if (nextBtn) nextBtn.style.display = state.step === 3 ? "none" : "";
+  if (backBtn) {
+    backBtn.style.display = state.step === 3 ? "none" : "";
+    backBtn.disabled = state.step === 0;
+  }
+  if (nextBtn) nextBtn.textContent = state.step === 2 ? "תשלום מאובטח (דמה)" : "המשך לשלב הבא";
 }
 
 function renderCategoryChips() {
@@ -509,7 +744,7 @@ function renderCatalogSections() {
         ${
           scrollable
             ? `<div class="catalog-row-shell">
-                <button class="row-nav-btn" type="button" data-row-nav="next" aria-label="המוצר הבא">›</button>
+                <button class="row-nav-btn" type="button" data-row-nav="next" aria-label="המוצר הבא">‹</button>
                 <div class="catalog-row">
                   ${rowItems
                     .map(
@@ -533,7 +768,7 @@ function renderCatalogSections() {
                     )
                     .join("")}
                 </div>
-                <button class="row-nav-btn" type="button" data-row-nav="prev" aria-label="המוצר הקודם">‹</button>
+                <button class="row-nav-btn" type="button" data-row-nav="prev" aria-label="המוצר הקודם">›</button>
               </div>`
             : `<div class="catalog-grid-static">
                 ${rowItems
@@ -637,13 +872,6 @@ function updatePricingUI() {
              : "ללא ₪0"
          }`
       : "תוספות: ללא ₪0";
-  priceSummaryEl.innerHTML = `<strong>סיכום מחיר חי</strong><br>
-    מחיר בסיס: ${formatPrice(currentProduct().price)}<br>
-    ביניים: ${formatPrice(p.subtotal)}<br>
-    ${addonsText}<br>
-    משלוח (${currentShipping().label}): ${formatShippingFeeDisplay(p.shipping)}<br>
-    מע"מ (17%): ${formatPrice(p.vat)}<br>
-    <strong>סה"כ לתשלום: ${formatPrice(p.total)}</strong>`;
   orderSummaryEl.innerHTML = `<h3>סיכום הזמנה</h3>
     <div class="selected-product-card">
       <div class="selected-product-image-wrap">
@@ -663,18 +891,26 @@ function updatePricingUI() {
       </div>
     </div>
     <div class="summary-card">
+      <strong>סיכום מחיר</strong><br>
+      מחיר בסיס: ${formatPrice(selectedProduct.price)}<br>
       ביניים: ${formatPrice(p.subtotal)}<br>
-      משלוח: ${currentShipping().label} — ${formatShippingFeeDisplay(currentShipping().fee)}<br>
+      ${addonsText}<br>
+      ${p.discount > 0 ? `קופון (${escHtml(state.couponApplied?.code || "")}): −${formatPrice(p.discount)}<br>` : ""}
+      משלוח (${currentShipping().label}): ${formatShippingFeeDisplay(p.shipping)}<br>
+      מע"מ (17%): ${formatPrice(p.vat)}<br>
       אמצעי תשלום: ${paymentOptionById(state.checkout.paymentMethod).label}<br>
-      <strong>סה"כ: ${formatPrice(p.total)}</strong><br>
+      <strong>סה"כ לתשלום: ${formatPrice(p.total)}</strong><br>
       זמן אספקה: ${currentShipping().eta}
     </div>`;
-  finalSummaryEl.innerHTML = `<strong>מספר הזמנה:</strong> HG-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 89999)}<br>
+  const orderNo =
+    state.step === 3 && state.placedOrderNumber
+      ? state.placedOrderNumber
+      : "-----";
+  finalSummaryEl.innerHTML = `<strong>מספר הזמנה:</strong> ${orderNo}<br>
       <strong>מוצר:</strong> ${selectedProduct.title}<br>
-      <strong>סימנים:</strong> ${emojiSummaryText()}<br>
-      <strong>חריטה:</strong> ${state.customization.text}<br>
-      <strong>משלוח:</strong> ${currentShipping().label} (${formatShippingFeeDisplay(currentShipping().fee)})<br>
-      <strong>תשלום:</strong> ${paymentOptionById(state.checkout.paymentMethod).label}`;
+      <strong>סטטוס:</strong> התקבלה הזמנה<br>
+      <strong>משלוח:</strong> ${currentShipping().label}<br>
+      <strong>סה"כ:</strong> ${formatPrice(p.total)}`;
 }
 
 function renderOptionRows() {
@@ -750,7 +986,7 @@ function renderTextBlocks() {
 function renderCheckoutFields() {
   const fields = [
     ["fullName", "שם מלא"], ["phone", "טלפון"], ["email", "אימייל"], ["city", "עיר"],
-    ["address", "רחוב"], ["house", "מספר בית"], ["zip", "מיקוד"], ["deliveryNotes", "הערות לשליח"],
+    ["address", "רחוב"], ["house", "מספר בית"], ["aptFloor", "קומה / דירה"], ["zip", "מיקוד"], ["deliveryNotes", "הערות לשליח"],
   ];
   $("#checkoutFields").innerHTML = fields
     .map(([k, l]) => `<label>${l}${k === "deliveryNotes" ? `<textarea data-checkout="${k}">${state.checkout[k]}</textarea>` : `<input data-checkout="${k}" value="${state.checkout[k]}" />`}</label>`)
@@ -919,6 +1155,7 @@ function setupEvents() {
 
     const chip = e.target.closest("[data-category-chip]");
     if (chip && state.step === 0) {
+      clearCouponOnCartChangeShopify();
       state.activeCategoryId = chip.dataset.categoryChip;
       renderCategoryChips();
       const firstInCategory = PRODUCT_ITEMS.find((p) => p.category === state.activeCategoryId);
@@ -965,6 +1202,7 @@ function setupEvents() {
 
     const productCard = e.target.closest("[data-product]");
     if (productCard && state.step === 0) {
+      clearCouponOnCartChangeShopify();
       state.selectedProductId = productCard.dataset.product;
       renderCatalogSections();
       const selected = catalogSectionsEl.querySelector(`[data-product="${state.selectedProductId}"]`);
@@ -1042,11 +1280,26 @@ function setupEvents() {
     }
 
     const matBtn = e.target.closest("[data-material]");
-    if (matBtn) { state.customization.materialId = matBtn.dataset.material; renderOptionRows(); updatePreview(); }
+    if (matBtn) {
+      clearCouponOnCartChangeShopify();
+      state.customization.materialId = matBtn.dataset.material;
+      renderOptionRows();
+      updatePreview();
+    }
     const sizeBtn = e.target.closest("[data-size]");
-    if (sizeBtn) { state.customization.sizeId = sizeBtn.dataset.size; renderOptionRows(); updatePricingUI(); }
+    if (sizeBtn) {
+      clearCouponOnCartChangeShopify();
+      state.customization.sizeId = sizeBtn.dataset.size;
+      renderOptionRows();
+      updatePricingUI();
+    }
     const shipBtn = e.target.closest("[data-ship]");
-    if (shipBtn) { state.checkout.shippingId = shipBtn.dataset.ship; renderShippingMethods(); updatePricingUI(); }
+    if (shipBtn) {
+      clearCouponOnCartChangeShopify();
+      state.checkout.shippingId = shipBtn.dataset.ship;
+      renderShippingMethods();
+      updatePricingUI();
+    }
 
     if (e.target.matches('[data-action="back"]')) goToStep(state.step - 1);
     if (e.target.matches('[data-action="next"]')) {
@@ -1055,6 +1308,14 @@ function setupEvents() {
         nextBtn.disabled = true;
         nextBtn.textContent = "מעבד תשלום...";
         setTimeout(() => {
+          const payload = buildStudioDemoOrderPayloadShopify();
+          if (payload) {
+            appendStudioDemoOrder(payload);
+            state.placedOrderNumber = payload.orderNumber;
+            if (payload.couponId) {
+              postJsonBases("/api/public/redeem-coupon", { coupon_id: payload.couponId });
+            }
+          }
           state.processing = false;
           nextBtn.disabled = false;
           goToStep(3);
@@ -1063,7 +1324,20 @@ function setupEvents() {
         goToStep(state.step + 1);
       }
     }
-    if (e.target.matches('[data-action="restart"]')) goToStep(0);
+    if (e.target.matches('[data-action="restart"]')) {
+      state.placedOrderNumber = null;
+      state.couponApplied = null;
+      renderCouponBoxShopify();
+      goToStep(0);
+    }
+    if (e.target.matches('[data-action="apply-coupon"]')) {
+      e.preventDefault();
+      applyCouponFromUiShopify();
+    }
+    if (e.target.matches('[data-action="remove-coupon"]')) {
+      e.preventDefault();
+      removeCouponShopify();
+    }
   });
 
   addTextBlockBtn?.addEventListener("click", () => {
@@ -1120,9 +1394,21 @@ function setupEvents() {
     updatePreview();
   });
   alignSelect.addEventListener("change", (e) => { state.customization.align = e.target.value; updatePreview(); });
-  qtyInput.addEventListener("input", (e) => { state.customization.qty = Math.max(1, Number(e.target.value) || 1); updatePricingUI(); });
-  giftWrap.addEventListener("change", (e) => { state.customization.giftWrap = e.target.value === "true"; updatePricingUI(); });
-  extraAddonEl.addEventListener("change", (e) => { state.customization.extraAddon = e.target.value; updatePricingUI(); });
+  qtyInput.addEventListener("input", (e) => {
+    clearCouponOnCartChangeShopify();
+    state.customization.qty = Math.max(1, Number(e.target.value) || 1);
+    updatePricingUI();
+  });
+  giftWrap.addEventListener("change", (e) => {
+    clearCouponOnCartChangeShopify();
+    state.customization.giftWrap = e.target.value === "true";
+    updatePricingUI();
+  });
+  extraAddonEl.addEventListener("change", (e) => {
+    clearCouponOnCartChangeShopify();
+    state.customization.extraAddon = e.target.value;
+    updatePricingUI();
+  });
   notesInput.addEventListener("input", (e) => { state.customization.notes = e.target.value; });
 
   document.body.addEventListener("input", (e) => {
@@ -1147,6 +1433,7 @@ function init() {
   updatePreview();
   updatePricingUI();
   setupEvents();
+  renderCouponBoxShopify();
 }
 
 init();

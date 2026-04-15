@@ -13,6 +13,7 @@ import { ProductStatusBadge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { createClient } from "@/lib/supabase/client";
 import { getProducts, updateProduct } from "@/lib/services/productService";
+import { readStudioDemoOrderJsonList } from "@/lib/studio-demo-storage";
 
 // ─── Convert mock camelCase products → ProductWithDetails ─────────────────────
 function mockToProductWithDetails(): ProductWithDetails[] {
@@ -48,6 +49,7 @@ function mockToProductWithDetails(): ProductWithDetails[] {
       status: m.status,
       is_featured: m.featured,
       tags: m.tags,
+      studio_colors: ["gold", "silver", "rose", "black"],
       seo_title: m.seoTitle ?? null,
       seo_description: m.seoDescription ?? null,
       created_at: m.createdAt,
@@ -56,6 +58,35 @@ function mockToProductWithDetails(): ProductWithDetails[] {
       images,
       inventory,
       category_name: cat?.name ?? null,
+      category_assignment_ids: m.subcategoryId ? [m.subcategoryId] : m.categoryId ? [m.categoryId] : [],
+    };
+  });
+}
+
+function applyStudioDemoOrderImpact(products: ProductWithDetails[]): ProductWithDetails[] {
+  const soldByProduct = new Map<string, number>();
+  const demoOrders = readStudioDemoOrderJsonList();
+
+  for (const order of demoOrders) {
+    if (order.status === "cancelled" || order.status === "refunded") continue;
+    for (const item of order.items ?? []) {
+      if (!item.productId) continue;
+      soldByProduct.set(item.productId, (soldByProduct.get(item.productId) ?? 0) + Math.max(0, item.quantity || 0));
+    }
+  }
+
+  if (soldByProduct.size === 0) return products;
+
+  return products.map((product) => {
+    if (!product.inventory) return product;
+    const sold = soldByProduct.get(product.id) ?? 0;
+    if (sold <= 0) return product;
+    return {
+      ...product,
+      inventory: {
+        ...product.inventory,
+        quantity: Math.max(0, product.inventory.quantity - sold),
+      },
     };
   });
 }
@@ -242,10 +273,10 @@ export default function InventoryPage() {
     setLoading(true);
     try {
       if (!isSupabaseConfigured()) {
-        setProducts(mockToProductWithDetails());
+        setProducts(applyStudioDemoOrderImpact(mockToProductWithDetails()));
       } else {
         const { products: p } = await getProducts(sb, { perPage: 999 });
-        setProducts(p);
+        setProducts(applyStudioDemoOrderImpact(p));
       }
     } catch (err) {
       console.error(err);

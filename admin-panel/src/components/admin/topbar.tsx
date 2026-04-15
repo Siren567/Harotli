@@ -1,22 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, LogOut, User, ExternalLink, ChevronDown } from "lucide-react";
 import { mockNotifications } from "@/lib/mock-data";
 import { formatRelativeTime } from "@/lib/utils";
+import { clearStudioDemoOrders, readStudioDemoDbOrders } from "@/lib/studio-demo-storage";
+import { isSupabaseConfigured } from "@/lib/auth";
 
 export function Topbar() {
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [demoNotifications, setDemoNotifications] = useState<
+    Array<{ id: string; message: string; createdAt: string; read: boolean }>
+  >([]);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3004";
 
-  const unread = mockNotifications.filter((n) => !n.read).length;
+  useEffect(() => {
+    const demo = readStudioDemoDbOrders()
+      .slice(0, 5)
+      .map((o) => ({
+        id: `demo-order-${o.id}`,
+        message: `הזמנה חדשה ${o.order_number} ${o.customer_name}`,
+        createdAt: o.created_at,
+        read: false,
+      }));
+    setDemoNotifications(demo);
+  }, []);
+
+  const baseNotifications = isSupabaseConfigured() ? [] : mockNotifications;
+  const notifications = [...demoNotifications, ...baseNotifications]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 20);
+  const unread = notifications.filter((n) => !n.read).length;
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
+  }
+
+  function handleClearDemoNotifications() {
+    clearStudioDemoOrders();
+    setDemoNotifications([]);
+    setNotifOpen(false);
   }
 
   return (
@@ -34,7 +62,29 @@ export function Topbar() {
         zIndex: 50,
       }}
     >
-      <div style={{ flex: 1 }} />
+      <div style={{ flex: 1 }}>
+        <a
+          href={siteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "var(--input)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            padding: "7px 11px",
+            color: "var(--foreground-secondary)",
+            textDecoration: "none",
+            fontSize: "12px",
+            fontWeight: 600,
+          }}
+        >
+          <ExternalLink size={13} />
+          חזרה לאתר
+        </a>
+      </div>
 
       {/* Notifications */}
       <div style={{ position: "relative" }}>
@@ -108,14 +158,33 @@ export function Topbar() {
                 }}
               >
                 <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--foreground)" }}>התראות</span>
-                {unread > 0 && (
-                  <span style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 500 }}>
-                    {unread} לא נקרא
-                  </span>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {demoNotifications.length > 0 && (
+                    <button
+                      onClick={handleClearDemoNotifications}
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "var(--muted-foreground)",
+                        background: "var(--input)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "6px",
+                        padding: "4px 8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      נקה דמו
+                    </button>
+                  )}
+                  {unread > 0 && (
+                    <span style={{ fontSize: "11px", color: "var(--primary)", fontWeight: 500 }}>
+                      {unread} לא נקרא
+                    </span>
+                  )}
+                </div>
               </div>
               <div style={{ maxHeight: "360px", overflowY: "auto" }}>
-                {mockNotifications.map((n) => (
+                {notifications.map((n) => (
                   <div
                     key={n.id}
                     style={{
@@ -212,7 +281,7 @@ export function Topbar() {
                 <p style={{ fontSize: "11px", color: "var(--muted-foreground)" }}>hello@harotli.co.il</p>
               </div>
               <a
-                href="/"
+                href={siteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{

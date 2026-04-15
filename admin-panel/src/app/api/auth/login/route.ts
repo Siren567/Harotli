@@ -8,16 +8,48 @@ import {
   createDevToken,
 } from "@/lib/auth";
 
+function normalizeCredentialInput(value: unknown): string {
+  return String(value ?? "")
+    .replace(/[\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, "")
+    .trim();
+}
+
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { username, email, password } = await request.json();
+    const identifier = normalizeCredentialInput(username ?? email ?? "");
+    const passwordInput = normalizeCredentialInput(password);
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "נדרשים אימייל וסיסמה" }, { status: 400 });
+    if (!identifier || !passwordInput) {
+      return NextResponse.json({ error: "נדרשים שם משתמש וסיסמה" }, { status: 400 });
+    }
+
+    // ── Local admin credentials (always available) ───────────────────────────
+    const localUsername = normalizeCredentialInput(DEV_CREDENTIALS.username).toLowerCase();
+    const localPassword = normalizeCredentialInput(DEV_CREDENTIALS.password);
+    const identifierLc = identifier.toLowerCase();
+
+    if (
+      (identifierLc === localUsername || identifierLc === "admin@harotli.co.il") &&
+      passwordInput === localPassword
+    ) {
+      const token = createDevToken();
+      const response = NextResponse.json({ success: true, mode: "local" });
+      response.cookies.set(DEV_SESSION_COOKIE, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+      return response;
     }
 
     // ── Supabase Auth mode ───────────────────────────────────────────────────
     if (isSupabaseConfigured()) {
+      if (!identifier.includes("@")) {
+        return NextResponse.json({ error: "שם משתמש או סיסמה שגויים" }, { status: 401 });
+      }
       const cookieStore = await cookies();
       const response = NextResponse.json({ success: true });
 
@@ -36,11 +68,11 @@ export async function POST(request: Request) {
         }
       );
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: identifier, password: passwordInput });
 
       if (error) {
         return NextResponse.json(
-          { error: "אימייל או סיסמה שגויים" },
+          { error: "שם משתמש או סיסמה שגויים" },
           { status: 401 }
         );
       }
@@ -49,8 +81,8 @@ export async function POST(request: Request) {
     }
 
     // ── Dev fallback mode ────────────────────────────────────────────────────
-    if (email !== DEV_CREDENTIALS.email || password !== DEV_CREDENTIALS.password) {
-      return NextResponse.json({ error: "אימייל או סיסמה שגויים" }, { status: 401 });
+    if (identifierLc !== localUsername || passwordInput !== localPassword) {
+      return NextResponse.json({ error: "שם משתמש או סיסמה שגויים" }, { status: 401 });
     }
 
     const token = createDevToken();

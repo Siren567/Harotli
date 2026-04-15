@@ -29,6 +29,7 @@ export interface ProductWithDetails extends DbProduct {
   images: DbProductImage[];
   inventory: DbInventory | null;
   category_name: string | null;
+  category_assignment_ids: string[];
 }
 
 /** Order with its items and timeline joined */
@@ -56,6 +57,8 @@ export interface InventoryRow extends DbInventory {
 
 // ─── Form / UI-only types ───────────────────────────────────────────────────
 
+export type StudioProductColorKey = "gold" | "silver" | "rose" | "black";
+
 export interface ProductFormData {
   name: string;
   slug: string;
@@ -66,6 +69,8 @@ export interface ProductFormData {
   compare_price: number | string;
   category_id: string;
   subcategory_id: string;
+  category_assignment_ids: string[];
+  studio_colors: StudioProductColorKey[];
   status: ProductStatus;
   is_featured: boolean;
   tags: string[];

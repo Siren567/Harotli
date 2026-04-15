@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "shimon",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-p", "3004", "."],
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["./scripts/start-all.sh"],
       "port": 3004
     }
   ]

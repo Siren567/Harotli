@@ -334,6 +334,8 @@
       width: 100%;
       height: auto;
       display: block;
+      direction: ltr;
+      unicode-bidi: isolate;
       filter: drop-shadow(0 18px 36px rgba(59, 42, 26, 0.08)) drop-shadow(0 4px 12px rgba(59, 42, 26, 0.04));
     }
 
@@ -580,6 +582,61 @@
       max-width: 1060px;
       margin: 0 auto;
       align-items: stretch;
+    }
+
+    .featured-loading,
+    .featured-empty {
+      text-align: center;
+      color: var(--text-mid);
+      font-size: 0.92rem;
+      margin: 12px auto 0;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    .product-image-placeholder {
+      width: 100%;
+      aspect-ratio: 640 / 384;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #ead7c0, #f7f0e8);
+    }
+
+    @keyframes site-whatsapp-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .site-whatsapp-fab {
+      position: fixed;
+      inset-inline-start: 20px;
+      bottom: 24px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(160deg, #5c3d26 0%, #3b2a1a 55%, #2a1d12 100%);
+      color: #f7f0e8 !important;
+      text-decoration: none;
+      box-shadow: 0 10px 28px rgba(43, 30, 18, 0.45);
+      border: 1px solid rgba(196, 154, 108, 0.35);
+      font-family: 'Heebo', sans-serif;
+      animation: site-whatsapp-float 2.8s ease-in-out infinite;
+    }
+
+    .site-whatsapp-fab svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      color: #f7f0e8;
+    }
+
+    .site-whatsapp-fab:hover {
+      animation-play-state: paused;
+      filter: brightness(1.08);
+      transform: translateY(-4px);
     }
 
     .product-card {
@@ -838,41 +895,33 @@
       color: var(--text-mid);
     }
 
-    .footer-whatsapp {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px 22px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-      color: #fff !important;
-      font-size: 0.9rem;
-      font-weight: 700;
-      text-decoration: none;
-      box-shadow: 0 4px 18px rgba(37, 211, 102, 0.35);
-      transition: transform 0.15s ease, box-shadow 0.2s ease;
-      border: none;
-      font-family: 'Heebo', sans-serif;
-    }
-
-    .footer-whatsapp:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 26px rgba(37, 211, 102, 0.45);
-      color: #fff !important;
-    }
-
-    .footer-whatsapp svg {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-    }
-
     .footer-bottom-meta {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 8px;
+    }
+
+    .footer-status-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 42, 26, 0.22);
+      background: #fff;
+      color: var(--brown-dark);
+      text-decoration: none;
+      font-size: 0.83rem;
+      font-weight: 700;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .footer-status-link:hover {
+      background: var(--beige);
+      border-color: var(--brown-mid);
+      transform: translateY(-1px);
     }
 
     .zh-studio-credit {
@@ -1122,11 +1171,6 @@
         align-items: center;
       }
 
-      .footer-whatsapp {
-        width: 100%;
-        max-width: 320px;
-        margin: 0 auto;
-      }
     }
 
     @media (max-width: 720px) {
@@ -1159,11 +1203,70 @@
         max-width: 320px;
         gap: 20px;
       }
+      .footer-top {
+        gap: 24px;
+      }
+      .footer-brand p {
+        max-width: none;
+      }
+      .footer-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .footer-bottom {
+        align-items: center;
+      }
+      .footer-status-link {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+      .site-whatsapp-fab {
+        width: 52px;
+        height: 52px;
+        bottom: 16px;
+        inset-inline-start: 12px;
+      }
+      .site-whatsapp-fab svg {
+        width: 24px;
+        height: 24px;
+      }
     }
 
     @media (max-width: 600px) {
       section { padding: 64px 5vw; }
       .footer-nav { flex-direction: column; gap: 28px; }
+      .footer-nav-col h4 {
+        margin-bottom: 10px;
+      }
+      .footer-nav-col ul {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .nav-menu a {
+        font-size: 0.78rem;
+      }
+      .nav-cta {
+        padding: 7px 11px;
+        font-size: 0.76rem;
+      }
+      .hero-content {
+        padding: 36px 5vw 44px;
+      }
+      .btn-primary,
+      .btn-light {
+        width: 100%;
+        justify-content: center;
+      }
+      .product-card {
+        border-radius: 14px;
+        padding: 10px;
+      }
+      .product-info h3 {
+        font-size: 0.86rem;
+      }
     }
   </style>
 </head>
@@ -1216,7 +1319,7 @@
       <div class="hero-visual-stage">
         <div class="hero-engrave-base" aria-hidden="true"></div>
         <div class="hero-engrave-wrap">
-          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך">
+          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך" dir="ltr">
             <defs>
               <linearGradient id="hero-metal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#F4EDE6"/>
@@ -1308,7 +1411,7 @@
       <div class="step fade-up">
         <div class="step-number">2</div>
         <h3>כותבים חריטה</h3>
-        <p>שם, תאריך, משפט — אנחנו מחרטים בדיוק מה שביקשתם.</p>
+        <p>שם, תאריך, משפט — אנחנו חורטים בדיוק מה שביקשתם.</p>
       </div>
       <div class="step fade-up">
         <div class="step-number">3</div>
@@ -1343,57 +1446,8 @@
       <div class="section-label">הקולקציה שלנו</div>
       <h2 class="section-title">נבחרים במיוחד</h2>
     </div>
-    <div class="products-grid">
-
-      <div class="product-card fade-up">
-        <div class="product-image">
-          <div class="product-image-inner">
-            <img src="https://images.pexels.com/photos/10475790/pexels-photo-10475790.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="צמיד זהב — אפשרות לחריטה אישית" width="640" height="384" loading="lazy" decoding="async" />
-          </div>
-        </div>
-        <div class="product-info">
-          <h3>צמיד זהב עם חריטה</h3>
-          <div class="price">החל מ־₪129</div>
-          <a href="#cta" class="btn-secondary">
-            <i data-lucide="shopping-bag"></i>
-            לפרטים
-          </a>
-        </div>
-      </div>
-
-      <div class="product-card fade-up">
-        <div class="product-image">
-          <div class="product-image-inner">
-            <img src="https://images.pexels.com/photos/265906/pexels-photo-265906.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="תליון ושרשרת — אפשרות לחריטה אישית" width="640" height="384" loading="lazy" decoding="async" />
-          </div>
-        </div>
-        <div class="product-info">
-          <h3>תליון עם חריטה</h3>
-          <div class="price">החל מ־₪149</div>
-          <a href="#cta" class="btn-secondary">
-            <i data-lucide="shopping-bag"></i>
-            לפרטים
-          </a>
-        </div>
-      </div>
-
-      <div class="product-card fade-up">
-        <div class="product-image">
-          <div class="product-image-inner">
-            <img src="https://images.pexels.com/photos/265722/pexels-photo-265722.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=640&amp;h=384&amp;fit=crop" alt="טבעות ומתנה אישית — אפשרות לחריטה" width="640" height="384" loading="lazy" decoding="async" />
-          </div>
-        </div>
-        <div class="product-info">
-          <h3>ערכת מתנה אישית</h3>
-          <div class="price">החל מ־₪199</div>
-          <a href="#cta" class="btn-secondary">
-            <i data-lucide="shopping-bag"></i>
-            לפרטים
-          </a>
-        </div>
-      </div>
-
-    </div>
+    <div class="products-grid" id="featuredProductsGrid"></div>
+    <p class="featured-loading" id="featuredLoading" hidden>טוען מוצרים…</p>
   </section>
 
   <!-- FINAL CTA -->
@@ -1441,10 +1495,7 @@
         <p>© 2026 חרוטלי. כל הזכויות שמורות.</p>
         <a href="https://zh-studio.xyz" target="_blank" rel="noopener noreferrer" class="zh-studio-credit">Made By ZH STUDIO</a>
       </div>
-      <a href="https://wa.me/972559433968" class="footer-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="שליחת הודעה בוואטסאפ">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        <span>שלחו לנו בוואטסאפ</span>
-      </a>
+      <a href="./order-status.html" class="footer-status-link">בדיקת סטטוס הזמנה</a>
     </div>
   </footer>
 
@@ -1610,5 +1661,6 @@
     );
     document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
   </script>
+  <script type="module" src="./site-home.js"></script>
 </body>
 </html>

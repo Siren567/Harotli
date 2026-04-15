@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight, Printer, ChevronDown, User, MapPin, CreditCard,
   Package, Clock, MessageSquare, CheckCircle, Truck, XCircle,
-  RefreshCw, AlertCircle, Circle,
+  RefreshCw, Circle,
 } from "lucide-react";
 import type { OrderStatus, PaymentStatus, OrderWithDetails } from "@/types";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
@@ -17,13 +17,11 @@ import { getOrderById, updateOrderStatus, updateOrderNote } from "@/lib/services
 
 // ─── Order status config ──────────────────────────────────────────────────────
 const ORDER_STATUSES: { value: OrderStatus; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "new",        label: "חדשה",  icon: Circle,       color: "var(--info)"           },
-  { value: "pending",    label: "ממתין",  icon: AlertCircle,  color: "var(--warning)"        },
-  { value: "processing", label: "בעיבוד", icon: RefreshCw,    color: "var(--primary)"        },
-  { value: "shipped",    label: "נשלח",   icon: Truck,        color: "var(--info)"           },
-  { value: "completed",  label: "הושלם",  icon: CheckCircle,  color: "var(--success)"        },
-  { value: "cancelled",  label: "בוטל",   icon: XCircle,      color: "var(--destructive)"    },
-  { value: "refunded",   label: "הוחזר",  icon: RefreshCw,    color: "var(--muted-foreground)" },
+  { value: "new",        label: "התקבלה", icon: Circle,      color: "var(--info)"        },
+  { value: "processing", label: "בייצור", icon: RefreshCw,   color: "var(--primary)"     },
+  { value: "shipped",    label: "נשלחה",  icon: Truck,       color: "var(--info)"        },
+  { value: "completed",  label: "נמסרה",  icon: CheckCircle, color: "var(--success)"     },
+  { value: "cancelled",  label: "בוטלה",  icon: XCircle,     color: "var(--destructive)" },
 ];
 
 const PAYMENT_STATUSES: { value: PaymentStatus; label: string }[] = [
@@ -35,7 +33,25 @@ const PAYMENT_STATUSES: { value: PaymentStatus; label: string }[] = [
 void PAYMENT_STATUSES; // used only for future payment status selector
 
 function statusLabel(s: OrderStatus) {
+  if (s === "pending") return "התקבלה";
+  if (s === "refunded") return "בוטלה";
   return ORDER_STATUSES.find((x) => x.value === s)?.label ?? s;
+}
+
+function parseTechnicalDetails(customization: string | null): Array<{ key: string; value: string }> {
+  if (!customization) return [];
+  return customization
+    .split("·")
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const idx = part.indexOf(":");
+      if (idx < 0) return { key: "פרט", value: part };
+      return {
+        key: part.slice(0, idx).trim() || "פרט",
+        value: part.slice(idx + 1).trim() || "—",
+      };
+    });
 }
 
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
@@ -56,8 +72,11 @@ function SideCard({ title, icon: Icon, children }: { title: string; icon: React.
 // ─── Timeline item ────────────────────────────────────────────────────────────
 function TimelineItem({ status, note, created_at, isLast }: { status: string; note: string | null; created_at: string; isLast: boolean }) {
   const config = ORDER_STATUSES.find((s) => s.value === status);
-  const Icon = config?.icon ?? Circle;
-  const color = config?.color ?? "var(--muted-foreground)";
+  const fallbackLabel = status === "pending" ? "התקבלה" : status === "refunded" ? "בוטלה" : status;
+  const fallbackIcon = status === "pending" ? Circle : status === "refunded" ? XCircle : Circle;
+  const fallbackColor = status === "pending" ? "var(--info)" : status === "refunded" ? "var(--destructive)" : "var(--muted-foreground)";
+  const Icon = config?.icon ?? fallbackIcon;
+  const color = config?.color ?? fallbackColor;
 
   return (
     <div style={{ display: "flex", gap: "12px" }}>
@@ -68,7 +87,7 @@ function TimelineItem({ status, note, created_at, isLast }: { status: string; no
         {!isLast && <div style={{ width: "2px", flex: 1, background: "var(--border)", marginTop: "4px", minHeight: "20px" }} />}
       </div>
       <div style={{ paddingBottom: isLast ? 0 : "16px", flex: 1 }}>
-        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--foreground)" }}>{config?.label ?? status}</p>
+        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--foreground)" }}>{config?.label ?? fallbackLabel}</p>
         {note && <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginTop: "2px" }}>{note}</p>}
         <p style={{ fontSize: "11px", color: "var(--muted-foreground)", marginTop: "3px" }}>{formatDateTime(created_at)}</p>
       </div>
@@ -187,7 +206,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 הזמנה {order.order_number}
                 <OrderStatusBadge status={order.status as OrderStatus} />
               </h1>
-              <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginTop: "2px" }}>{formatDateTime(order.created_at)}</p>
+              <p style={{ fontSize: "12px", color: "var(--muted-foreground)", marginTop: "2px" }}>
+                {formatDateTime(order.created_at)} · ID: {order.id}
+              </p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
@@ -248,9 +269,28 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                       </td>
                       <td style={{ padding: "14px 16px", verticalAlign: "middle" }}>
                         {item.customization ? (
-                          <span style={{ fontSize: "13px", color: "var(--primary)", background: "rgba(201,169,110,0.1)", border: "1px solid rgba(201,169,110,0.25)", borderRadius: "6px", padding: "2px 8px" }}>
-                            {item.customization}
-                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            <span style={{ fontSize: "12px", color: "var(--primary)", background: "rgba(201,169,110,0.1)", border: "1px solid rgba(201,169,110,0.25)", borderRadius: "6px", padding: "2px 8px", alignSelf: "flex-start" }}>
+                              כולל התאמה אישית
+                            </span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                              {parseTechnicalDetails(item.customization).map((detail, dIdx) => (
+                                <span
+                                  key={`${item.id ?? i}-detail-${dIdx}`}
+                                  style={{
+                                    fontSize: "11px",
+                                    color: "var(--foreground-secondary)",
+                                    background: "var(--input)",
+                                    border: "1px solid var(--border)",
+                                    borderRadius: "999px",
+                                    padding: "2px 8px",
+                                  }}
+                                >
+                                  {detail.key}: {detail.value}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         ) : (
                           <span style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>—</span>
                         )}
@@ -420,6 +460,34 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                     isLast={i === timeline.length - 1}
                   />
                 ))}
+              </div>
+            </SideCard>
+
+            {/* Technical details */}
+            <SideCard title="פרטים טכניים" icon={Package}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {order.items.some((it) => it.customization) ? (
+                  order.items.map((item, idx) => {
+                    const details = parseTechnicalDetails(item.customization);
+                    if (!details.length) return null;
+                    return (
+                      <div key={`tech-${item.id ?? idx}`} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 10px", background: "var(--input)" }}>
+                        <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--foreground)", marginBottom: "6px" }}>
+                          {item.product_name}
+                        </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          {details.map((detail, i2) => (
+                            <p key={`tech-${item.id ?? idx}-${i2}`} style={{ fontSize: "11px", color: "var(--foreground-secondary)" }}>
+                              <span style={{ color: "var(--muted-foreground)" }}>{detail.key}:</span> {detail.value}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>לא הוזנו פרטים טכניים להזמנה זו.</p>
+                )}
               </div>
             </SideCard>
 
