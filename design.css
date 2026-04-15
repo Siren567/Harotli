@@ -1117,22 +1117,29 @@ input, select, textarea { border: 1px solid #e9d9ca; border-radius: 10px; paddin
     padding-bottom: 2px;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
   }
   .progress::-webkit-scrollbar { display: none; }
   .step-pill {
     flex: 0 0 140px;
     min-width: 140px;
+    scroll-snap-align: center;
   }
   .chip-row {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
+    padding: 2px 2px 4px;
     scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 12px;
+    touch-action: pan-x;
   }
   .chip-row::-webkit-scrollbar { display: none; }
   .chip {
     flex: 0 0 auto;
+    scroll-snap-align: center;
   }
   .catalog-title { font-size: 1.2rem; }
   .catalog-subtitle { font-size: .92rem; }

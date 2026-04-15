@@ -809,6 +809,10 @@ function renderProgress() {
       <div class="title">${label}</div>
     </div>`;
   }).join("");
+  requestAnimationFrame(() => {
+    const active = progressEl.querySelector(".step-pill.active");
+    active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
 }
 
 function goToStep(target) {
@@ -841,6 +845,10 @@ function renderCategoryChips() {
     (p) =>
       `<button class="chip ${state.activeCategoryId === p.id ? "active" : ""}" data-category-chip="${p.id}">${p.title}</button>`
   ).join("");
+  requestAnimationFrame(() => {
+    const active = categoryChipsEl.querySelector(".chip.active");
+    active?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  });
 }
 
 function renderCatalogSections() {
