@@ -14,8 +14,8 @@ export const SESSION_COOKIE = "sb-session"; // Supabase SSR sets this automatica
 
 // ─── Panel credentials (hardcoded by request) ───────────────────────────────
 export const DEV_CREDENTIALS = {
-  username: "root",
-  password: "smhgkji2547@",
+  username: "admin",
+  password: "Harotli@2026",
 };
 
 export function isSupabaseConfigured(): boolean {

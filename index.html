@@ -925,6 +925,27 @@
       transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
       white-space: nowrap;
     }
+    .footer-admin-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 42, 26, 0.18);
+      background: transparent;
+      color: var(--text-mid);
+      text-decoration: none;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+      white-space: nowrap;
+    }
+    .footer-admin-link:hover {
+      border-color: var(--brown-mid);
+      color: var(--brown-dark);
+      background: rgba(255, 255, 255, 0.65);
+    }
 
     .footer-status-link:hover {
       background: var(--beige);
@@ -1230,6 +1251,10 @@
         justify-content: center;
         min-height: 44px;
       }
+      .footer-admin-link {
+        width: 100%;
+        min-height: 40px;
+      }
       .site-whatsapp-fab {
         width: 52px;
         height: 52px;
@@ -1498,6 +1523,7 @@
     <div class="footer-bottom">
       <div class="footer-bottom-meta">
         <p>© 2026 חרוטלי. כל הזכויות שמורות.</p>
+        <a href="/admin" class="footer-admin-link">ניהול אתר</a>
         <a href="https://zh-studio.xyz" target="_blank" rel="noopener noreferrer" class="zh-studio-credit">Made By ZH STUDIO</a>
       </div>
       <a href="./order-status.html" class="footer-status-link">בדיקת סטטוס הזמנה</a>

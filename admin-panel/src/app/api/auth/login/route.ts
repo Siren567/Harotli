@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const identifierLc = identifier.toLowerCase();
 
     if (
-      (identifierLc === localUsername || identifierLc === "admin@harotli.co.il") &&
+      identifierLc === localUsername &&
       passwordInput === localPassword
     ) {
       const token = createDevToken();

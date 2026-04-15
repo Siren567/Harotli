@@ -134,7 +134,7 @@ function LoginForm() {
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  placeholder="root"
+                  placeholder="admin"
                   required
                   autoFocus
                   style={inputStyle(!!error)}
