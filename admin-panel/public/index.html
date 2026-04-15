@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" id="top">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>חריטה אישית | מתנות עם משמעות</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://images.pexels.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brown-dark:  #3B2A1A;
+      --brown-mid:   #8B5E3C;
+      --brown-light: #C49A6C;
+      --beige:       #EAD7C0;
+      --beige-light: #F7F0E8;
+      --beige-mid:   #F0E4D4;
+      --white:       #FFFFFF;
+      --text-dark:   #1A1008;
+      --text-mid:    #5C4030;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--white);
+      color: var(--text-dark);
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .site-main {
+      flex: 1 0 auto;
+    }
+
+    /* Lucide: consistent outline weight (filled icons override below) */
+    svg.lucide {
+      stroke-width: 1.5;
+      stroke: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(139,94,60,0.1);
+      padding: 0 5vw;
+      height: 64px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: clamp(8px, 2vw, 20px);
+    }
+
+    .nav-logo {
+      font-family: 'Heebo', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--brown-dark);
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+      transition: color 0.2s ease, opacity 0.2s ease;
+      justify-self: start;
+      grid-column: 1;
+    }
+
+    .nav-logo:hover {
+      color: var(--brown-mid);
+    }
+
+    .nav-logo span { color: var(--brown-mid); }
+
+    .nav-cta {
+      grid-column: 3;
+      justify-self: end;
+      white-space: nowrap;
+      background: var(--brown-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      padding: 10px 22px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-cta:hover { background: var(--brown-mid); transform: translateY(-1px); }
+    .nav-cta [data-lucide] { width: 14px; height: 14px; }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: clamp(12px, 2vw, 22px);
+      grid-column: 2;
+      justify-self: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-menu a {
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-mid);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .nav-menu a:hover { color: var(--brown-dark); }
+
+    /* ── HERO ── */
+    .hero {
+      padding-top: 64px;
+      min-height: min(100svh, 920px);
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 72px 5vw 72px 6vw;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+      font-weight: 800;
+      line-height: 1.22;
+      color: var(--brown-dark);
+      letter-spacing: -0.025em;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--brown-mid);
+    }
+
+    .hero-sub {
+      font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+      color: var(--text-mid);
+      font-weight: 400;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 400px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--brown-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      padding: 16px 34px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      width: fit-content;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(59,42,26,0.22);
+    }
+
+    .btn-primary:hover {
+      background: var(--brown-mid);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(59,42,26,0.28);
+    }
+
+    .btn-primary [data-lucide] { width: 16px; height: 16px; }
+
+    .hero-trust {
+      margin-top: 36px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+    }
+
+    .hero-trust .stars {
+      display: flex;
+      gap: 2px;
+      color: var(--brown-light);
+    }
+
+    .hero-trust .stars svg.lucide {
+      width: 13px;
+      height: 13px;
+      stroke: var(--brown-light);
+      fill: var(--brown-light);
+      stroke-width: 1.25;
+    }
+
+    /* ── HERO VISUAL (warm premium / depth, no flat grid) ── */
+    .hero-visual {
+      background: linear-gradient(168deg, #FCFAF7 0%, var(--beige-light) 42%, #E8DDD2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 480px;
+    }
+
+    .hero-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 90% 70% at 45% 38%, rgba(196,154,108,0.22) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .hero-visual-orbs {
+      position: absolute;
+      inset: -25%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(56px);
+      animation: orb-drift 22s ease-in-out infinite;
+    }
+
+    .hero-orb-a {
+      width: 58vmin;
+      height: 52vmin;
+      background: rgba(234, 215, 192, 0.55);
+      top: -8%;
+      inset-inline-start: -12%;
+    }
+
+    .hero-orb-b {
+      width: 42vmin;
+      height: 42vmin;
+      background: rgba(196, 154, 108, 0.2);
+      bottom: 5%;
+      inset-inline-end: -8%;
+      animation-delay: -8s;
+    }
+
+    .hero-orb-c {
+      width: 32vmin;
+      height: 32vmin;
+      background: rgba(139, 94, 60, 0.09);
+      top: 38%;
+      inset-inline-start: 28%;
+      animation-delay: -14s;
+    }
+
+    @keyframes orb-drift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(3%, -4%) scale(1.06); }
+    }
+
+    .hero-visual-stage {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: min(520px, 100%);
+      min-height: min(72vh, 680px);
+      margin: 0 auto;
+      padding: clamp(32px, 6vh, 56px) 8%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Hero engraving: minimal metal plate + groove draw + tip (luxury, slow loop) */
+    .hero-engrave-wrap {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 400px;
+      animation: hero-engrave-float 12s ease-in-out infinite;
+    }
+    .hero-engrave-caption {
+      position: absolute;
+      inset-inline: 0;
+      top: 50%;
+      transform: translateY(-52%);
+      text-align: center;
+      font-family: 'Heebo', sans-serif;
+      font-size: 21px;
+      font-weight: 600;
+      color: #3B2A1A;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      direction: rtl;
+      unicode-bidi: plaintext;
+      animation: hero-words-reveal 10.5s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes hero-engrave-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .hero-engrave-base {
+      position: absolute;
+      bottom: -5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 70%;
+      max-width: 260px;
+      height: 24px;
+      background: radial-gradient(ellipse 100% 100% at 50% 50%, rgba(59, 42, 26, 0.1) 0%, transparent 75%);
+      filter: blur(14px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hero-engrave-svg {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: auto;
+      display: block;
+      direction: rtl;
+      unicode-bidi: plaintext;
+      filter: drop-shadow(0 18px 36px rgba(59, 42, 26, 0.08)) drop-shadow(0 4px 12px rgba(59, 42, 26, 0.04));
+    }
+
+    .hero-metal-plate {
+      filter: url(#hero-metal-shadow);
+    }
+
+    .hero-engrave-groove {
+      fill: none;
+      stroke: rgba(59, 42, 26, 0.2);
+      stroke-width: 1.15;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pathLength: 1;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: hero-groove-draw 10.5s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes hero-groove-draw {
+      0% { stroke-dashoffset: 1; }
+      30% { stroke-dashoffset: 0; }
+      62% { stroke-dashoffset: 0; }
+      63% { stroke-dashoffset: 1; }
+      100% { stroke-dashoffset: 1; }
+    }
+
+    @keyframes hero-words-reveal {
+      0%, 14% { opacity: 0; }
+      32% { opacity: 0.9; }
+      58% { opacity: 0.9; }
+      62% { opacity: 0; }
+      100% { opacity: 0; }
+    }
+
+    .hero-engrave-tip {
+      fill: #6B4A32;
+    }
+
+    /* ── SHARED ── */
+    section { padding: 88px 5vw; }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--brown-mid);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(1.55rem, 2.6vw, 2.2rem);
+      font-weight: 800;
+      color: var(--brown-dark);
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+    }
+
+    .section-header { margin-bottom: 56px; }
+    .section-header-center { text-align: center; }
+
+    /* ── BENEFITS ── */
+    .benefits { background: var(--beige-light); }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .benefit-card {
+      background: var(--white);
+      border-radius: 22px;
+      padding: 38px 30px;
+      text-align: center;
+      border: 1px solid rgba(139,94,60,0.08);
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+
+    .benefit-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 14px 44px rgba(59,42,26,0.1);
+    }
+
+    .benefit-icon {
+      width: 58px; height: 58px;
+      background: var(--beige);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 22px;
+    }
+
+    .benefit-icon [data-lucide] {
+      width: 24px; height: 24px;
+      color: var(--brown-mid);
+    }
+
+    .benefit-card h3 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+
+    .benefit-card p {
+      font-size: 0.88rem;
+      color: var(--text-mid);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how { background: var(--white); }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      position: relative;
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 31px;
+      right: 16.66%;
+      left: 16.66%;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent 0%, var(--beige) 20%, var(--brown-light) 50%, var(--beige) 80%, transparent 100%);
+      z-index: 0;
+    }
+
+    .step {
+      text-align: center;
+      padding: 0 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-number {
+      width: 62px; height: 62px;
+      background: var(--brown-dark);
+      color: var(--white);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 0 auto 26px;
+      box-shadow: 0 4px 18px rgba(59,42,26,0.25);
+    }
+
+    .step h3 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 0.87rem;
+      color: var(--text-mid);
+      line-height: 1.65;
+    }
+
+    /* ── EXAMPLES ── */
+    .examples { background: var(--beige-light); }
+
+    .examples-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .example-tag {
+      background: var(--white);
+      border: 1.5px solid rgba(139,94,60,0.2);
+      border-radius: 50px;
+      padding: 13px 26px;
+      font-size: 0.97rem;
+      font-weight: 500;
+      color: var(--brown-dark);
+      transition: all 0.2s;
+      cursor: default;
+      box-shadow: 0 2px 8px rgba(59,42,26,0.05);
+    }
+
+    .example-tag:hover {
+      background: var(--beige);
+      border-color: var(--brown-mid);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59,42,26,0.1);
+    }
+
+    .examples-sub {
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-mid);
+      margin-top: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-direction: row;
+    }
+
+    .examples-sub-text {
+      line-height: 1.5;
+    }
+
+    .examples-sub .examples-sub-icon {
+      width: 15px;
+      height: 15px;
+      color: var(--brown-mid);
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
+    /* ── PRODUCTS: 3-up row, equal cells, horizontal balance ── */
+    .products {
+      background: var(--white);
+      padding-top: 72px;
+      padding-bottom: 80px;
+    }
+
+    .products .section-header {
+      margin-bottom: 36px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(18px, 2.4vw, 32px);
+      max-width: 1060px;
+      margin: 0 auto;
+      align-items: stretch;
+    }
+
+    .featured-loading,
+    .featured-empty {
+      text-align: center;
+      color: var(--text-mid);
+      font-size: 0.92rem;
+      margin: 12px auto 0;
+      max-width: 520px;
+      line-height: 1.5;
+    }
+
+    .product-image-placeholder {
+      width: 100%;
+      aspect-ratio: 640 / 384;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #ead7c0, #f7f0e8);
+    }
+
+    @keyframes site-whatsapp-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .site-whatsapp-fab {
+      position: fixed;
+      inset-inline-start: 20px;
+      bottom: 24px;
+      z-index: 90;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(160deg, #5c3d26 0%, #3b2a1a 55%, #2a1d12 100%);
+      color: #f7f0e8 !important;
+      text-decoration: none;
+      box-shadow: 0 10px 28px rgba(43, 30, 18, 0.45);
+      border: 1px solid rgba(196, 154, 108, 0.35);
+      font-family: 'Heebo', sans-serif;
+      animation: site-whatsapp-float 2.8s ease-in-out infinite;
+    }
+
+    .site-whatsapp-fab svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      color: #f7f0e8;
+    }
+
+    .site-whatsapp-fab:hover {
+      animation-play-state: paused;
+      filter: brightness(1.08);
+      transform: translateY(-4px);
+    }
+
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid rgba(139, 94, 60, 0.1);
+      background: var(--white);
+      box-shadow: 0 2px 14px rgba(59, 42, 26, 0.04);
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(59, 42, 26, 0.08);
+    }
+
+    .product-image {
+      position: relative;
+      padding: 8px;
+      background: var(--beige-light);
+      border-radius: 12px;
+      border: 1px solid rgba(139, 94, 60, 0.08);
+      flex: 0 0 auto;
+      width: 100%;
+    }
+
+    .product-image-inner {
+      position: relative;
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      aspect-ratio: 5 / 3;
+      background: var(--beige-mid);
+      border: 1px solid rgba(139, 94, 60, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+      isolation: isolate;
+    }
+
+    .product-image-inner img {
+      width: 100%;
+      height: 100%;
+      max-height: none;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .product-card:hover .product-image-inner img {
+      transform: scale(1.03);
+    }
+
+    .product-info {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 12px 6px 4px;
+      min-height: 0;
+      width: 100%;
+    }
+
+    .product-info h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--brown-dark);
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+
+    .product-info .price {
+      font-size: 0.78rem;
+      color: var(--brown-mid);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: auto;
+      background: transparent;
+      color: var(--brown-dark);
+      border: 1px solid var(--brown-dark);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      width: auto;
+      min-width: 0;
+    }
+
+    .btn-secondary:hover {
+      background: var(--brown-dark);
+      color: var(--white);
+      border-color: var(--brown-dark);
+    }
+
+    .btn-secondary svg.lucide {
+      width: 13px;
+      height: 13px;
+    }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      background: var(--brown-dark);
+      text-align: center;
+      padding: 96px 5vw 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(196,154,108,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .final-cta .section-label { color: rgba(196,154,108,0.8); }
+
+    .final-cta h2 {
+      font-size: clamp(1.7rem, 3vw, 2.7rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.025em;
+      line-height: 1.25;
+      margin-bottom: 18px;
+    }
+
+    .final-cta p {
+      font-size: 0.98rem;
+      color: rgba(234,215,192,0.75);
+      margin: 0 auto 40px;
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    .btn-light {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: var(--white);
+      color: var(--brown-dark);
+      border: none;
+      border-radius: 50px;
+      padding: 18px 42px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      box-shadow: 0 4px 28px rgba(0,0,0,0.2);
+    }
+
+    .btn-light:hover {
+      background: var(--beige);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.28);
+    }
+
+    .btn-light [data-lucide] { width: 16px; height: 16px; }
+
+    /* ── FOOTER ── */
+    footer {
+      flex-shrink: 0;
+      background: var(--beige-light);
+      border-top: 1px solid rgba(139,94,60,0.1);
+      padding: 48px 5vw 32px;
+    }
+
+    #footer-contact {
+      scroll-margin-top: 76px;
+    }
+
+    .footer-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(139,94,60,0.1);
+      gap: 40px;
+    }
+
+    .footer-brand .logo {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+
+    .footer-brand .logo span { color: var(--brown-mid); }
+
+    .footer-brand p {
+      font-size: 0.83rem;
+      color: var(--text-mid);
+      line-height: 1.65;
+      max-width: 220px;
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 56px;
+    }
+
+    .footer-nav-col h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brown-dark);
+      margin-bottom: 16px;
+    }
+
+    .footer-nav-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-nav-col ul li a {
+      font-size: 0.88rem;
+      color: var(--text-mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-nav-col ul li a:hover { color: var(--brown-dark); }
+
+    .footer-bottom {
+      padding-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-bottom p {
+      font-size: 0.78rem;
+      color: var(--text-mid);
+    }
+
+    .footer-bottom-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .footer-status-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 42, 26, 0.22);
+      background: #fff;
+      color: var(--brown-dark);
+      text-decoration: none;
+      font-size: 0.83rem;
+      font-weight: 700;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+    .footer-admin-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 42, 26, 0.18);
+      background: transparent;
+      color: var(--text-mid);
+      text-decoration: none;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+      white-space: nowrap;
+    }
+    .footer-admin-link:hover {
+      border-color: var(--brown-mid);
+      color: var(--brown-dark);
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .footer-status-link:hover {
+      background: var(--beige);
+      border-color: var(--brown-mid);
+      transform: translateY(-1px);
+    }
+
+    .zh-studio-credit {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--brown-dark);
+      text-decoration: none;
+      border-bottom: 2px solid rgba(59, 42, 26, 0.35);
+      padding-bottom: 3px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .zh-studio-credit:hover {
+      color: var(--brown-dark);
+      border-bottom-color: var(--brown-dark);
+    }
+
+    /* ── SITE MODALS ── */
+    .site-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(26, 16, 8, 0.55);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .site-modal-overlay.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .site-modal {
+      width: min(100%, 520px);
+      max-height: min(88vh, 640px);
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid rgba(139, 94, 60, 0.12);
+    }
+
+    .site-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(139, 94, 60, 0.12);
+      flex-shrink: 0;
+    }
+
+    .site-modal-header h2 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--brown-dark);
+    }
+
+    .site-modal-close {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 10px;
+      background: var(--beige-mid);
+      color: var(--brown-dark);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+
+    .site-modal-close:hover { background: var(--beige); }
+
+    .site-modal-body {
+      padding: 18px 20px 22px;
+      overflow-y: auto;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--text-mid);
+    }
+
+    .site-modal-body p { margin: 0 0 12px; }
+    .site-modal-body p:last-child { margin-bottom: 0; }
+    .site-modal-body h3 {
+      font-size: 0.92rem;
+      color: var(--brown-dark);
+      margin: 16px 0 8px;
+    }
+
+    .contact-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .contact-form label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--brown-dark);
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.88rem;
+      padding: 10px 12px;
+      border: 1px solid rgba(139, 94, 60, 0.2);
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--text-dark);
+    }
+
+    .contact-form textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .contact-form .field-hint {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-mid);
+    }
+
+    .contact-form-submit {
+      margin-top: 6px;
+      align-self: flex-start;
+      background: var(--brown-dark);
+      color: var(--white);
+      border: none;
+      border-radius: 50px;
+      padding: 12px 28px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .contact-form-submit:hover { background: var(--brown-mid); }
+
+    .contact-success {
+      text-align: center;
+      padding: 12px 8px 8px;
+    }
+
+    .contact-success-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: #e8f7ee;
+      color: #2e8758;
+      display: grid;
+      place-items: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .contact-success h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      color: var(--brown-dark);
+    }
+
+    .contact-success p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-mid);
+    }
+
+    /* ── FADE UP ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .fade-up:nth-child(2) { transition-delay: 0.1s; }
+    .fade-up:nth-child(3) { transition-delay: 0.2s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .hero-content {
+        padding: 44px 6vw 52px;
+        order: 2;
+      }
+
+      .hero-visual {
+        height: 60vw;
+        min-height: 300px;
+        order: 1;
+      }
+
+      .benefits-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+
+      .steps-grid::before { display: none; }
+
+      .footer-top {
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .footer-nav { gap: 36px; }
+
+      .footer-bottom {
+        flex-direction: column;
+        gap: 18px;
+        text-align: center;
+        align-items: stretch;
+      }
+
+      .footer-bottom-meta {
+        align-items: center;
+      }
+
+    }
+
+    @media (max-width: 720px) {
+      nav {
+        height: 60px;
+        min-height: 60px;
+        padding: 8px 4vw;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+      }
+
+      .nav-logo {
+        font-size: 1.05rem;
+        grid-column: 1;
+        justify-self: start;
+      }
+
+      .nav-menu {
+        display: none;
+      }
+
+      .nav-cta {
+        grid-column: 2;
+        justify-self: end;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+        max-width: 320px;
+        gap: 20px;
+      }
+      .footer-top {
+        gap: 24px;
+      }
+      .footer-brand p {
+        max-width: none;
+      }
+      .footer-nav {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .footer-bottom {
+        align-items: center;
+      }
+      .footer-status-link {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+      }
+      .footer-admin-link {
+        width: 100%;
+        min-height: 40px;
+      }
+      .site-whatsapp-fab {
+        width: 52px;
+        height: 52px;
+        bottom: 16px;
+        inset-inline-start: 12px;
+      }
+      .site-whatsapp-fab svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      section { padding: 64px 5vw; }
+      .footer-nav { flex-direction: column; gap: 28px; }
+      .footer-nav-col h4 {
+        margin-bottom: 10px;
+      }
+      .footer-nav-col ul {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .nav-cta {
+        padding: 7px 11px;
+        font-size: 0.76rem;
+      }
+      .hero-content {
+        padding: 36px 5vw 44px;
+      }
+      .btn-primary,
+      .btn-light {
+        width: 100%;
+        justify-content: center;
+      }
+      .product-card {
+        border-radius: 14px;
+        padding: 10px;
+      }
+      .product-info h3 {
+        font-size: 0.86rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#top" class="nav-logo" aria-label="חרוטלי — לראש הדף">חרוט<span>לי</span></a>
+    <ul class="nav-menu">
+      <li><a href="#top">דף הבית</a></li>
+      <li><a href="#how">איך זה עובד</a></li>
+      <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+    </ul>
+    <a href="./design.html" class="nav-cta">
+      לעיצוב המתנה
+      <i data-lucide="arrow-left"></i>
+    </a>
+  </nav>
+
+  <main class="site-main">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <h1>חריטה אישית שהופכת<br>כל מוצר למתנה<br>עם <em>משמעות</em></h1>
+      <p class="hero-sub">צמידים, תליונים ומתנות בהתאמה אישית מלאה — כי כל מילה חשובה.</p>
+      <a href="./design.html" class="btn-primary">
+        לעיצוב המתנה שלך
+        <i data-lucide="arrow-left"></i>
+      </a>
+      <div class="hero-trust">
+        <div class="stars">
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+          <i data-lucide="star"></i>
+        </div>
+        4.9 · מעל 2,400 לקוחות מרוצים
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-visual-orbs" aria-hidden="true">
+        <div class="hero-orb hero-orb-a"></div>
+        <div class="hero-orb hero-orb-b"></div>
+        <div class="hero-orb hero-orb-c"></div>
+      </div>
+
+      <div class="hero-visual-stage">
+        <div class="hero-engrave-base" aria-hidden="true"></div>
+        <div class="hero-engrave-wrap">
+          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך" dir="rtl">
+            <defs>
+              <linearGradient id="hero-metal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#F4EDE6"/>
+                <stop offset="38%" stop-color="#E8DDD4"/>
+                <stop offset="100%" stop-color="#D4C4B4"/>
+              </linearGradient>
+              <linearGradient id="hero-metal-sheen" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="rgba(255,255,255,0.5)"/>
+                <stop offset="45%" stop-color="rgba(255,255,255,0)"/>
+                <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+              </linearGradient>
+              <filter id="hero-metal-shadow" x="-8%" y="-8%" width="116%" height="116%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="b"/>
+                <feOffset in="b" dy="2" result="o"/>
+                <feComponentTransfer in="o" result="s">
+                  <feFuncA type="linear" slope="0.2"/>
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode in="s"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <rect class="hero-metal-plate" x="36" y="32" width="328" height="156" rx="16" fill="url(#hero-metal-grad)"/>
+            <rect x="36" y="32" width="328" height="156" rx="16" fill="url(#hero-metal-sheen)" opacity="0.35" style="pointer-events: none;"/>
+            <rect x="36" y="32" width="328" height="156" rx="16" fill="none" stroke="rgba(139,94,60,0.12)" stroke-width="1"/>
+
+            <!-- Hidden geometry for tip motion (same curve as visible groove) -->
+            <path id="hero-groove-trace" fill="none" stroke="none" d="M 308 134 C 262 128, 222 130, 200 131 C 178 132, 138 130, 92 134"/>
+
+            <path class="hero-engrave-groove" d="M 308 134 C 262 128, 222 130, 200 131 C 178 132, 138 130, 92 134"/>
+
+            <circle class="hero-engrave-tip" r="2.2" opacity="0">
+              <animate attributeName="opacity" dur="10.5s" repeatCount="indefinite" calcMode="linear"
+                values="0;0;0.85;0.85;0;0"
+                keyTimes="0;0.04;0.09;0.3;0.35;1"/>
+              <animateMotion dur="10.5s" repeatCount="indefinite" calcMode="linear" rotate="0"
+                keyTimes="0;0.3;0.62;0.63;1"
+                keyPoints="0;1;1;0;0">
+                <mpath href="#hero-groove-trace"/>
+              </animateMotion>
+            </circle>
+          </svg>
+          <div class="hero-engrave-caption" aria-hidden="true">לנצח שלך</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section class="benefits">
+    <div class="section-header section-header-center">
+      <div class="section-label">למה לבחור בנו</div>
+      <h2 class="section-title">כל מה שצריך למתנה מושלמת</h2>
+    </div>
+    <div class="benefits-grid">
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="heart"></i></div>
+        <h3>מתנה אישית עם משמעות</h3>
+        <p>כל מוצר הופך לזיכרון שנשאר לנצח — שם, תאריך, או מילה שרק אתם מבינים.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="gem"></i></div>
+        <h3>חריטה מדויקת ואיכותית</h3>
+        <p>טכנולוגיית לייזר מתקדמת שמבטיחה חריטה חדה, ברורה ועמידה לאורך שנים.</p>
+      </div>
+      <div class="benefit-card fade-up">
+        <div class="benefit-icon"><i data-lucide="truck"></i></div>
+        <h3>משלוח מהיר עד הבית</h3>
+        <p>הזמינו היום, תקבלו בקרוב. אריזת מתנה כלולה ללא עלות נוספת.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="section-header section-header-center">
+      <div class="section-label">תהליך פשוט</div>
+      <h2 class="section-title">איך זה עובד?</h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step fade-up">
+        <div class="step-number">1</div>
+        <h3>בוחרים מוצר</h3>
+        <p>צמיד, תליון, מחזיק מפתחות — מבחר רחב לכל מי שאתם אוהבים.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-number">2</div>
+        <h3>כותבים חריטה</h3>
+        <p>שם, תאריך, משפט — אנחנו חורטים בדיוק מה שביקשתם.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-number">3</div>
+        <h3>מקבלים עד הבית</h3>
+        <p>עטוף יפה ומוכן למתנה, ישירות לדלת שלכם.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLES -->
+  <section class="examples">
+    <div class="section-header section-header-center">
+      <div class="section-label">השראה לחריטה</div>
+      <h2 class="section-title">מה אנשים חורטים?</h2>
+    </div>
+    <div class="examples-grid">
+      <div class="example-tag fade-up">לאמא הכי טובה בעולם</div>
+      <div class="example-tag fade-up">לנצח שלך</div>
+      <div class="example-tag fade-up">12.08.2023</div>
+      <div class="example-tag fade-up">תמיד אתך</div>
+      <div class="example-tag fade-up">אהבה ראשונה ואחרונה</div>
+    </div>
+    <p class="examples-sub">
+      <span class="examples-sub-text">או כל מילה שרק אתם יודעים את המשמעות שלה</span>
+      <i data-lucide="sparkles" class="examples-sub-icon" aria-hidden="true"></i>
+    </p>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section class="products" id="products">
+    <div class="section-header section-header-center">
+      <div class="section-label">הקולקציה שלנו</div>
+      <h2 class="section-title">נבחרים במיוחד</h2>
+    </div>
+    <div class="products-grid" id="featuredProductsGrid"></div>
+    <p class="featured-loading" id="featuredLoading" hidden>טוען מוצרים…</p>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="cta">
+    <div class="section-label">מוכנים?</div>
+    <h2>רוצה מתנה אישית<br>שלא שוכחים?</h2>
+    <p>צרו מתנה שתישאר בלב לנצח — תהליך פשוט, תוצאה מרגשת.</p>
+    <a href="./design.html" class="btn-light">
+      התחל לעצב עכשיו
+      <i data-lucide="arrow-left"></i>
+    </a>
+  </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer id="site-footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">חרוט<span>לי</span></div>
+        <p>מתנות אישיות עם חריטה מקצועית — כי כל מילה שווה לנצח.</p>
+      </div>
+      <div class="footer-nav">
+        <div class="footer-nav-col">
+          <h4>ניווט</h4>
+          <ul>
+            <li><a href="#top">דף הבית</a></li>
+            <li><a href="#how">איך זה עובד</a></li>
+            <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+          </ul>
+        </div>
+        <div class="footer-nav-col" id="footer-contact">
+          <h4>מידע</h4>
+          <ul>
+            <li><a href="#" data-open-modal="terms">תקנון</a></li>
+            <li><a href="#" data-open-modal="privacy">מדיניות פרטיות</a></li>
+            <li><a href="#" data-open-modal="usage">תנאי שימוש</a></li>
+            <li><a href="#" data-open-modal="contact">צור קשר</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-bottom-meta">
+        <p>© 2026 חרוטלי. כל הזכויות שמורות.</p>
+        <a href="/admin" class="footer-admin-link">ניהול אתר</a>
+        <a href="https://zh-studio.xyz" target="_blank" rel="noopener noreferrer" class="zh-studio-credit">Made By ZH STUDIO</a>
+      </div>
+      <a href="./order-status.html" class="footer-status-link">בדיקת סטטוס הזמנה</a>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <div class="site-modal-overlay" id="modal-terms" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-terms-title">
+      <div class="site-modal-header">
+        <h2 id="modal-terms-title">תקנון</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p><strong>מבוא:</strong> התקנון נכתב בלשון זכר מטעמי נוחות וחל על שני המינים. שימוש באתר ו/או רכישת מוצר מהווה הסכמה מלאה לתקנון זה.</p>
+        <h3>1. כללי</h3>
+        <p>האתר משמש כחנות אינטרנטית לרכישת מוצרים. בעלי האתר רשאים לעדכן את תנאי התקנון מעת לעת, לפי שיקול דעתם הבלעדי וללא הודעה מוקדמת. השינויים יחולו על הזמנות חדשות בלבד.</p>
+        <p>אם אינך מסכים לתנאי התקנון, הינך מתבקש להימנע משימוש באתר ומביצוע הזמנות.</p>
+        <h3>2. הזמנה ורכישה באתר</h3>
+        <p>המחיר המופיע לצד כל מוצר הוא המחיר הקובע במועד אישור ההזמנה. ייתכנו שינויים במחירים, במלאי ובזמינות ללא הודעה מוקדמת.</p>
+        <p>הזמנה נחשבת מאושרת לאחר אישור עסקה מחברת האשראי וקבלת אישור הזמנה בדוא&quot;ל. במקרה של חוסר מלאי או אי יכולת אספקה תוצע חלופה או ביטול עסקה וזיכוי מלא.</p>
+        <p>ייתכנו הבדלים בין תמונות/מפרטים באתר לבין המוצר בפועל. התמונות מיועדות להמחשה בלבד.</p>
+        <h3>3. משלוחים ואספקה</h3>
+        <p>זמני שילוח משוערים: עד 7 ימי עסקים ממועד שליחת המוצר, ובכל מקרה עד 35 ימי עסקים ממועד שליחה, בכפוף לגורמים חיצוניים (חברות שילוח, דואר, עומסים וכד').</p>
+        <p>ייתכן פיצול משלוחים בהזמנה הכוללת יותר ממוצר אחד. משלוחים זמינים לכתובות בישראל בלבד.</p>
+        <h3>4. ביטולים והחזרות</h3>
+        <p>ניתן לבטל עסקה בהתאם לחוק הגנת הצרכן בתוך 14 יום ממועד קבלת המוצר/פרטי העסקה (לפי המאוחר), בכפוף לדמי ביטול של 5% או 100 ש&quot;ח (לפי הנמוך), ובתוספת עמלות סליקה אם יחולו.</p>
+        <p>במוצר פגום/לא תואם יש לפנות לשירות לקוחות בצירוף תיעוד. מוצרים בהתאמה אישית עשויים שלא להיות ניתנים להחזרה, בכפוף להוראות הדין.</p>
+        <h3>5. הגבלת אחריות</h3>
+        <p>החברה אינה אחראית לעיכובים או כשלים שנגרמו מכוח עליון, תקלות ספקים חיצוניים, תקלות תקשורת, תקלות סליקה או כל גורם שאינו בשליטתה הסבירה.</p>
+        <p>האחריות למוצרים תחול בהתאם לדין ולמדיניות היצרן/הספק. אין בתקנון זה כדי לגרוע מזכויות צרכניות קוגנטיות.</p>
+        <h3>6. סמכות שיפוט ודין חל</h3>
+        <p>הדין החל הוא דין מדינת ישראל בלבד, וסמכות השיפוט הייחודית נתונה לבתי המשפט המוסמכים בתל אביב.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-privacy" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-privacy-title">
+      <div class="site-modal-header">
+        <h2 id="modal-privacy-title">מדיניות פרטיות</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p>אנו מכבדים את פרטיות המשתמשים ומתחייבים לנקוט באמצעים סבירים לשמירה על המידע הנמסר לנו.</p>
+        <h3>1. איזה מידע נאסף</h3>
+        <p>בעת ביצוע הזמנה נאספים פרטים הנדרשים לצורך השלמת העסקה והשילוח בלבד, לרבות: שם מלא, כתובת, טלפון, דוא&quot;ל, פרטי משלוח ופרטי חיוב.</p>
+        <p>פרטי כרטיס אשראי אינם נשמרים בשרתי העסק.</p>
+        <h3>2. מטרות השימוש במידע</h3>
+        <p>המידע ישמש לצורך:</p>
+        <ul>
+          <li>ביצוע הזמנות ואספקת מוצרים</li>
+          <li>שירות לקוחות ומענה לפניות</li>
+          <li>שליחת עדכוני סטטוס הזמנה, חשבוניות ומשלוחים</li>
+          <li>שליחת דיוור שיווקי, בכפוף לדין ולהסכמת המשתמש</li>
+        </ul>
+        <h3>3. העברת מידע לצדדים שלישיים</h3>
+        <p>המידע יועבר רק לגורמים נדרשים לצורך אספקת השירות (כגון חברות שילוח וספקים), ובהיקף הדרוש בלבד.</p>
+        <h3>4. אבטחת מידע</h3>
+        <p>החברה עושה שימוש באמצעי אבטחה מקובלים, אך אינה יכולה להבטיח חסינות מוחלטת מפני חדירה בלתי מורשית.</p>
+        <h3>5. עוגיות (Cookies)</h3>
+        <p>האתר עשוי להשתמש בעוגיות לצורכי תפעול, אבטחה, זיהוי ושיפור חוויית שימוש. ניתן לנהל או לחסום עוגיות דרך הגדרות הדפדפן.</p>
+        <h3>6. דיוור והסרה מרשימות</h3>
+        <p>ניתן להסיר את עצמך מדיוור שיווקי באמצעות קישור הסרה בכל הודעה. הודעות תפעוליות הקשורות להזמנה ומשלוח יישלחו גם ללא הרשמה לדיוור שיווקי.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-usage" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-usage-title">
+      <div class="site-modal-header">
+        <h2 id="modal-usage-title">תנאי שימוש</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <p>מסמך זה מגדיר את תנאי השימוש באתר ובשירותים המוצעים בו.</p>
+        <h3>1. כשירות לשימוש באתר</h3>
+        <p>השימוש באתר מותר לבני 18 ומעלה, בעלי כשרות משפטית, תושבי ישראל, ובעלי אמצעי תשלום תקף שהונפק בישראל.</p>
+        <h3>2. חשבון משתמש ואבטחת גישה</h3>
+        <p>המשתמש אחראי לשמירת סודיות פרטי הגישה שלו ולא יעשה שימוש בפרטי גישה של אחרים. אסור לפתוח חשבון עבור צד שלישי ללא הסכמתו המפורשת.</p>
+        <h3>3. שימוש מותר ואסור</h3>
+        <ul>
+          <li>אין להעתיק, לשכפל, להפיץ, לפרסם או לעשות שימוש מסחרי בתכני האתר ללא אישור מראש.</li>
+          <li>אין לבצע פעולות הפוגעות באתר, במערכותיו או במשתמשים אחרים.</li>
+          <li>אין להעלות תוכן בלתי חוקי, מטעה, פוגעני או מפר זכויות.</li>
+        </ul>
+        <h3>4. קניין רוחני</h3>
+        <p>כל הזכויות בתכני האתר, לרבות טקסטים, עיצוב, תמונות, לוגו, סימני מסחר, אלגוריתמים ומערכות, שמורות לבעלי האתר או למורשים מטעמם.</p>
+        <h3>5. תקלות ושיבושים</h3>
+        <p>ייתכנו תקלות זמניות, הפרעות או שיבושים עקב גורמים טכניים או צדדים שלישיים. החברה תפעל באופן סביר לתיקון תקלות אך אינה מתחייבת לזמינות רציפה מלאה.</p>
+        <h3>6. ניהול תוכן ומשתמשים</h3>
+        <p>החברה רשאית להסיר תוכן, להגביל או לחסום משתמשים בכל עת, לפי שיקול דעתה, כאשר נמצא שימוש החורג מתנאים אלה או מהוראות הדין.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="site-modal-overlay" id="modal-contact" role="presentation">
+    <div class="site-modal" role="dialog" aria-modal="true" aria-labelledby="modal-contact-title">
+      <div class="site-modal-header">
+        <h2 id="modal-contact-title">צור קשר</h2>
+        <button type="button" class="site-modal-close" data-modal-close aria-label="סגור">×</button>
+      </div>
+      <div class="site-modal-body">
+        <form id="contact-form" class="contact-form" novalidate>
+          <label>
+            שם מלא
+            <input type="text" name="name" required autocomplete="name" placeholder="לדוגמה: יעל כהן" />
+          </label>
+          <label>
+            מספר הזמנה <span class="field-hint">(אופציונלי)</span>
+            <input type="text" name="order" inputmode="numeric" autocomplete="off" placeholder="לדוגמה: HG-2026-12345" />
+          </label>
+          <label>
+            טלפון
+            <input type="tel" name="phone" required autocomplete="tel" placeholder="לדוגמה: 050-0000000" />
+          </label>
+          <label>
+            הודעה
+            <textarea name="message" required placeholder="כיצד נוכל לעזור?"></textarea>
+          </label>
+          <button type="submit" class="contact-form-submit">שלח</button>
+        </form>
+        <div id="contact-success" class="contact-success" hidden>
+          <div class="contact-success-icon" aria-hidden="true">✓</div>
+          <h3>הפנייה נשלחה</h3>
+          <p>הודעתך התקבלה אצלנו. נחזור אליך תוך <strong>שני ימי עסקים</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Init Lucide icons
+    lucide.createIcons();
+
+    (function () {
+      function closeModal(overlay) {
+        if (!overlay) return;
+        overlay.classList.remove("is-open");
+        document.body.style.overflow = "";
+        if (overlay.id === "modal-contact") {
+          const form = document.getElementById("contact-form");
+          const ok = document.getElementById("contact-success");
+          if (form && ok) {
+            form.hidden = false;
+            ok.hidden = true;
+            form.reset();
+          }
+        }
+      }
+
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.add("is-open");
+        document.body.style.overflow = "hidden";
+      }
+
+      document.querySelectorAll("[data-open-modal]").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const key = a.getAttribute("data-open-modal");
+          const map = { terms: "modal-terms", privacy: "modal-privacy", usage: "modal-usage", contact: "modal-contact" };
+          const id = map[key];
+          if (id) openModal(id);
+        });
+      });
+
+      document.querySelectorAll("[data-modal-close]").forEach((btn) => {
+        btn.addEventListener("click", () => closeModal(btn.closest(".site-modal-overlay")));
+      });
+
+      document.querySelectorAll(".site-modal-overlay").forEach((ov) => {
+        ov.addEventListener("click", (e) => {
+          if (e.target === ov) closeModal(ov);
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        document.querySelectorAll(".site-modal-overlay.is-open").forEach((ov) => closeModal(ov));
+      });
+
+      const contactForm = document.getElementById("contact-form");
+      contactForm?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!contactForm.checkValidity()) {
+          contactForm.reportValidity();
+          return;
+        }
+        contactForm.hidden = true;
+        const ok = document.getElementById("contact-success");
+        if (ok) ok.hidden = false;
+      });
+    })();
+
+    // Scroll fade animation
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+  <script type="module" src="./site-home.js"></script>
+</body>
+</html>
