@@ -1,24 +1,46 @@
 {
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/admin",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin"
+      "src": "admin-panel/package.json",
+      "use": "@vercel/next"
     },
     {
-      "source": "/admin/:path*",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin/:path*"
+      "src": "**/*.{html,css,js,json,png,jpg,jpeg,webp,svg,ico,gif,woff,woff2,ttf}",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/_next/(.*)",
+      "dest": "/_next/$1"
     },
     {
-      "source": "/login",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/login"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     },
     {
-      "source": "/api/:path*",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/api/:path*"
+      "src": "/login",
+      "dest": "/login"
     },
     {
-      "source": "/_next/:path*",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/_next/:path*"
+      "src": "/admin",
+      "dest": "/admin"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "/admin/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }
