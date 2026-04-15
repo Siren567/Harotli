@@ -11,19 +11,5 @@
       "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin/login",
       "permanent": false
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/admin",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/admin/login",
-      "destination": "/admin/login/index.html"
-    },
-    {
-      "source": "/admin/login/",
-      "destination": "/admin/login/index.html"
-    }
   ]
 }
