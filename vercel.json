@@ -1,0 +1,25 @@
+{
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin/:path*"
+    },
+    {
+      "source": "/login",
+      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/login"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/api/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/_next/:path*"
+    }
+  ]
+}
+

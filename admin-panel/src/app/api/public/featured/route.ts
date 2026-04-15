@@ -15,10 +15,21 @@ export async function OPTIONS() {
 export async function GET() {
   try {
     const sb = createServiceClient();
-    const { productIds } = await getFeaturedProductIds(sb);
-    if (!productIds.length) {
-      return NextResponse.json({ items: [] }, { headers: CORS_HEADERS });
-    }
+    const { productIds: configuredFeaturedIds } = await getFeaturedProductIds(sb);
+
+    const loadFallbackActiveIds = async (): Promise<string[]> => {
+      const { data, error } = await sb
+        .from("products")
+        .select("id")
+        .eq("status", "active")
+        .order("updated_at", { ascending: false })
+        .limit(12);
+      if (error) throw error;
+      return (data ?? []).map((r) => r.id);
+    };
+
+    const productIds = configuredFeaturedIds.length ? configuredFeaturedIds : await loadFallbackActiveIds();
+    if (!productIds.length) return NextResponse.json({ items: [] }, { headers: CORS_HEADERS });
 
     const { data: products, error: pErr } = await sb
       .from("products")
@@ -55,7 +66,6 @@ export async function GET() {
       .map((id) => {
         const p = byId.get(id);
         if (!p) return null;
-        if ((qty.get(id) ?? 0) <= 0) return null;
         return {
           id: p.id,
           name: p.name,

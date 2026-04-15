@@ -852,8 +852,17 @@ function renderCatalogSections() {
     catalogSectionsEl.innerHTML = `<section class="catalog-section"><p class="step-sub">אין כרגע מוצרים זמינים בקטלוג.</p></section>`;
     return;
   }
-  const category = runtimeCategories.find((c) => c.id === state.activeCategoryId) || runtimeCategories[0];
-  const items = runtimeItems.filter((p) => p.category === category.id);
+  let category = runtimeCategories.find((c) => c.id === state.activeCategoryId) || runtimeCategories[0];
+  let items = runtimeItems.filter((p) => p.category === category.id);
+  if (!items.length) {
+    const firstCategoryWithItems = runtimeCategories.find((c) => runtimeItems.some((p) => p.category === c.id));
+    if (firstCategoryWithItems) {
+      category = firstCategoryWithItems;
+      state.activeCategoryId = firstCategoryWithItems.id;
+      items = runtimeItems.filter((p) => p.category === category.id);
+      renderCategoryChips();
+    }
+  }
   if (!items.length) {
     catalogSectionsEl.innerHTML = `<section class="catalog-section" id="catalog-${category.id}">
       <h3 class="catalog-title">${category.title}</h3>
@@ -931,12 +940,16 @@ function renderCatalogSections() {
     let rowsMarkup = "";
     if (category.useSubcategories) {
       const subcategories = [...new Set(items.map((p) => p.subcategory).filter(Boolean))];
-      rowsMarkup = subcategories
-        .map((sub) => {
-          const rowItems = items.filter((p) => p.subcategory === sub);
-          return rowRenderer(rowItems, sub);
-        })
-        .join("");
+      if (subcategories.length) {
+        rowsMarkup = subcategories
+          .map((sub) => {
+            const rowItems = items.filter((p) => p.subcategory === sub);
+            return rowRenderer(rowItems, sub);
+          })
+          .join("");
+      } else {
+        rowsMarkup = rowRenderer(items, "", true);
+      }
     } else {
       const shouldBeStaticGrid = category.id === "keychains" || category.id === "other";
       rowsMarkup = rowRenderer(items, "", !shouldBeStaticGrid);
