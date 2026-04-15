@@ -7,6 +7,14 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+function isMissingAssignmentsTableError(message: string | undefined): boolean {
+  if (!message) return false;
+  return (
+    message.includes("product_category_assignments") &&
+    (message.includes("schema cache") || message.includes("relation") || message.includes("does not exist"))
+  );
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -71,7 +79,9 @@ export async function GET() {
     if (imagesError) throw imagesError;
     if (baseCategoriesError) throw baseCategoriesError;
     if (inventoryError) throw inventoryError;
-    if (assignmentError) throw assignmentError;
+    if (assignmentError && !isMissingAssignmentsTableError(assignmentError.message)) throw assignmentError;
+
+    const safeAssignmentRows = assignmentRows ?? [];
 
     const assignmentCategoryIds = [
       ...new Set((assignmentRows ?? []).map((r) => r.category_id)),
@@ -112,7 +122,7 @@ export async function GET() {
     }
 
     const assignmentsByProduct = new Map<string, string[]>();
-    for (const row of assignmentRows ?? []) {
+    for (const row of safeAssignmentRows) {
       const list = assignmentsByProduct.get(row.product_id) ?? [];
       list.push(row.category_id);
       assignmentsByProduct.set(row.product_id, list);
@@ -164,9 +174,7 @@ export async function GET() {
       return [{ studioCategory: "other", subcategory: null }];
     }
 
-    const payload = (products ?? [])
-      .filter((p) => (inventoryByProductId.get(p.id) ?? 0) > 0)
-      .flatMap((p) => {
+    const payload = (products ?? []).flatMap((p) => {
         const imgs = imagesByProduct.get(p.id) ?? [];
         const imageUrls = imgs.map((i) => i.url).filter(Boolean);
         const primary = imgs.find((i) => i.is_primary)?.url ?? imgs[0]?.url ?? null;

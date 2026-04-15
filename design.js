@@ -158,13 +158,9 @@ async function loadProductsFromDatabase() {
     }
   }
 
-  const mockRows = PRODUCT_ITEMS.map(enrichMockCatalogItem);
-
   if (!rows.length) {
-    runtimeItems = mockRows;
-    const existingCategories = new Set(runtimeItems.map((p) => p.category));
-    runtimeCategories = PRODUCT_CATEGORIES.filter((c) => existingCategories.has(c.id));
-    if (!runtimeCategories.length) runtimeCategories = [...PRODUCT_CATEGORIES];
+    runtimeItems = [];
+    runtimeCategories = [...PRODUCT_CATEGORIES];
     return;
   }
 
@@ -190,7 +186,7 @@ async function loadProductsFromDatabase() {
       };
     });
 
-  runtimeItems = mapped.length ? mapped : mockRows;
+  runtimeItems = mapped;
 
   const existingCategories = new Set(runtimeItems.map((p) => p.category));
   runtimeCategories = PRODUCT_CATEGORIES.filter((c) => existingCategories.has(c.id));
@@ -858,6 +854,13 @@ function renderCatalogSections() {
   }
   const category = runtimeCategories.find((c) => c.id === state.activeCategoryId) || runtimeCategories[0];
   const items = runtimeItems.filter((p) => p.category === category.id);
+  if (!items.length) {
+    catalogSectionsEl.innerHTML = `<section class="catalog-section" id="catalog-${category.id}">
+      <h3 class="catalog-title">${category.title}</h3>
+      <p class="step-sub">אין כרגע מוצרים זמינים בקטגוריה זו.</p>
+    </section>`;
+    return;
+  }
     const rowRenderer = (rowItems, subTitle = "", scrollable = true) => `
       <div class="catalog-row-wrap">
         ${subTitle ? `<h4 class="catalog-subtitle">${subTitle}</h4>` : ""}
