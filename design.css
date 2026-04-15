@@ -1109,13 +1109,43 @@ input, select, textarea { border: 1px solid #e9d9ca; border-radius: 10px; paddin
     padding: 9px 12px;
     font-size: 0.78rem;
   }
-  .progress { grid-template-columns: 1fr 1fr; }
+  .progress {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    grid-template-columns: none;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .progress::-webkit-scrollbar { display: none; }
+  .step-pill {
+    flex: 0 0 140px;
+    min-width: 140px;
+  }
+  .chip-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .chip-row::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+  }
   .catalog-title { font-size: 1.2rem; }
   .catalog-subtitle { font-size: .92rem; }
+  .catalog-row {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-inline: 2px;
+  }
   .catalog-row .product-card {
-    flex-basis: calc((100% - 12px) / 2);
-    max-width: calc((100% - 12px) / 2);
-    min-width: calc((100% - 12px) / 2);
+    flex-basis: 78%;
+    max-width: 78%;
+    min-width: 78%;
+    scroll-snap-align: start;
   }
   .catalog-grid-static {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1145,9 +1175,9 @@ input, select, textarea { border: 1px solid #e9d9ca; border-radius: 10px; paddin
     line-height: 1.2;
   }
   .catalog-row .product-card {
-    flex-basis: 100%;
-    max-width: 100%;
-    min-width: 100%;
+    flex-basis: 86%;
+    max-width: 86%;
+    min-width: 86%;
   }
   .catalog-grid-static {
     grid-template-columns: 1fr;

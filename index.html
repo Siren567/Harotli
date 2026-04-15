@@ -308,6 +308,24 @@
       max-width: 400px;
       animation: hero-engrave-float 12s ease-in-out infinite;
     }
+    .hero-engrave-caption {
+      position: absolute;
+      inset-inline: 0;
+      top: 50%;
+      transform: translateY(-52%);
+      text-align: center;
+      font-family: 'Heebo', sans-serif;
+      font-size: 21px;
+      font-weight: 600;
+      color: #3B2A1A;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+      direction: rtl;
+      unicode-bidi: plaintext;
+      animation: hero-words-reveal 10.5s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+    }
 
     @keyframes hero-engrave-float {
       0%, 100% { transform: translateY(0); }
@@ -334,8 +352,8 @@
       width: 100%;
       height: auto;
       display: block;
-      direction: ltr;
-      unicode-bidi: isolate;
+      direction: rtl;
+      unicode-bidi: plaintext;
       filter: drop-shadow(0 18px 36px rgba(59, 42, 26, 0.08)) drop-shadow(0 4px 12px rgba(59, 42, 26, 0.04));
     }
 
@@ -352,7 +370,7 @@
       pathLength: 1;
       stroke-dasharray: 1;
       stroke-dashoffset: 1;
-      animation: hero-groove-draw 8s cubic-bezier(0.42, 0, 0.2, 1) infinite;
+      animation: hero-groove-draw 10.5s cubic-bezier(0.33, 0, 0.2, 1) infinite;
     }
 
     @keyframes hero-groove-draw {
@@ -361,16 +379,6 @@
       62% { stroke-dashoffset: 0; }
       63% { stroke-dashoffset: 1; }
       100% { stroke-dashoffset: 1; }
-    }
-
-    .hero-engrave-words {
-      font-family: 'Heebo', sans-serif;
-      font-size: 21px;
-      font-weight: 600;
-      fill: #3B2A1A;
-      letter-spacing: 0.04em;
-      opacity: 0;
-      animation: hero-words-reveal 8s cubic-bezier(0.42, 0, 0.2, 1) infinite;
     }
 
     @keyframes hero-words-reveal {
@@ -1175,25 +1183,26 @@
 
     @media (max-width: 720px) {
       nav {
-        height: auto;
-        min-height: 56px;
-        padding: 10px 4vw;
-        row-gap: 10px;
+        height: 60px;
+        min-height: 60px;
+        padding: 8px 4vw;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
       }
 
       .nav-logo {
         font-size: 1.05rem;
+        grid-column: 1;
+        justify-self: start;
       }
 
       .nav-menu {
-        gap: 10px 14px;
-      }
-
-      .nav-menu a {
-        font-size: 0.82rem;
+        display: none;
       }
 
       .nav-cta {
+        grid-column: 2;
+        justify-self: end;
         padding: 8px 14px;
         font-size: 0.82rem;
       }
@@ -1245,9 +1254,6 @@
     }
 
     @media (max-width: 420px) {
-      .nav-menu a {
-        font-size: 0.78rem;
-      }
       .nav-cta {
         padding: 7px 11px;
         font-size: 0.76rem;
@@ -1319,7 +1325,7 @@
       <div class="hero-visual-stage">
         <div class="hero-engrave-base" aria-hidden="true"></div>
         <div class="hero-engrave-wrap">
-          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך" dir="ltr">
+          <svg class="hero-engrave-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="אנימציית חריטה: לנצח שלך" dir="rtl">
             <defs>
               <linearGradient id="hero-metal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stop-color="#F4EDE6"/>
@@ -1348,24 +1354,23 @@
             <rect x="36" y="32" width="328" height="156" rx="16" fill="url(#hero-metal-sheen)" opacity="0.35" style="pointer-events: none;"/>
             <rect x="36" y="32" width="328" height="156" rx="16" fill="none" stroke="rgba(139,94,60,0.12)" stroke-width="1"/>
 
-            <text class="hero-engrave-words" x="200" y="114" text-anchor="middle" direction="rtl" lang="he">לנצח שלך</text>
-
             <!-- Hidden geometry for tip motion (same curve as visible groove) -->
-            <path id="hero-groove-trace" fill="none" stroke="none" d="M 92 134 C 138 130, 178 132, 200 131 C 222 130, 262 128, 308 134"/>
+            <path id="hero-groove-trace" fill="none" stroke="none" d="M 308 134 C 262 128, 222 130, 200 131 C 178 132, 138 130, 92 134"/>
 
-            <path class="hero-engrave-groove" d="M 92 134 C 138 130, 178 132, 200 131 C 222 130, 262 128, 308 134"/>
+            <path class="hero-engrave-groove" d="M 308 134 C 262 128, 222 130, 200 131 C 178 132, 138 130, 92 134"/>
 
             <circle class="hero-engrave-tip" r="2.2" opacity="0">
-              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" calcMode="linear"
+              <animate attributeName="opacity" dur="10.5s" repeatCount="indefinite" calcMode="linear"
                 values="0;0;0.85;0.85;0;0"
                 keyTimes="0;0.04;0.09;0.3;0.35;1"/>
-              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" rotate="0"
+              <animateMotion dur="10.5s" repeatCount="indefinite" calcMode="linear" rotate="0"
                 keyTimes="0;0.3;0.62;0.63;1"
                 keyPoints="0;1;1;0;0">
                 <mpath href="#hero-groove-trace"/>
               </animateMotion>
             </circle>
           </svg>
+          <div class="hero-engrave-caption" aria-hidden="true">לנצח שלך</div>
         </div>
       </div>
     </div>
