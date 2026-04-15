@@ -66,11 +66,24 @@ function normalizeInput(v) {
 }
 
 async function fetchOrder(orderNumber) {
+  const fetchWithTimeout = async (url, ms = 4500) => {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, {
+        headers: { Accept: "application/json" },
+        signal: ctrl.signal,
+      });
+    } finally {
+      clearTimeout(id);
+    }
+  };
+
   for (const base of apiBases()) {
     try {
-      const res = await fetch(`${base}/api/public/order-status?order_number=${encodeURIComponent(orderNumber)}`, {
-        headers: { Accept: "application/json" },
-      });
+      const res = await fetchWithTimeout(
+        `${base}/api/public/order-status?order_number=${encodeURIComponent(orderNumber)}`
+      );
       const json = await res.json().catch(() => null);
       if (res.ok && json?.order) return json.order;
     } catch {
@@ -164,7 +177,7 @@ async function runLookup() {
   btn.removeAttribute("disabled");
 
   if (!order) {
-    msg.textContent = "לא נמצאה הזמנה עם המספר הזה.";
+    msg.textContent = "לא נמצאה הזמנה או שהשרת לא זמין כרגע. נסה שוב בעוד רגע.";
     return;
   }
   msg.textContent = "הזמנה נמצאה.";
