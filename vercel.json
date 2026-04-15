@@ -1,15 +1,3 @@
 {
-  "cleanUrls": false,
-  "redirects": [
-    {
-      "source": "/admin/login",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin/login",
-      "permanent": false
-    },
-    {
-      "source": "/admin",
-      "destination": "https://harotli-lqbavh3i4-galzohar4466-6318s-projects.vercel.app/admin/login",
-      "permanent": false
-    }
-  ]
+  "cleanUrls": false
 }
